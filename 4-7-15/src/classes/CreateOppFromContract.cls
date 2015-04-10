@@ -6,7 +6,7 @@ public with sharing class CreateOppFromContract {
    	
     public CreateOppFromContract(ApexPages.StandardController stdController) { 
         cont = (Contract)stdController.getRecord();     
-        system.debug('IN THE CREATECONTRACTCLASS');
+       
     }
 
     public PageReference Create() {
@@ -15,11 +15,10 @@ public with sharing class CreateOppFromContract {
             
             
             
-            //If opp was not closed won, then the query will throw a SOQL exception and no contracts are created.
-           // Opportunity opp = [SELECT Id, AccountId, Amount, CloseDate, StageName FROM Opportunity WHERE Id=:opp.Id And IsClosed = true and IsWon = true];
+           
 			Contract cont = [select account.name, ID,Currency_Type__c, AccountId, name, Year1_Billing_Amount_Total__c, Year2_Billing_Amount_Total__c,Year3_Billing_Amount_Total__c,Year4_Billing_Amount_Total__c,Year_4_Billng_Amount_Services__c,Year_3_Billing_Amount_Services__c,Year_2_Billing_Amount_Services__c,Year_1_Billing_Amount_Services__c,Contract_Term_Length_Yrs__c,startdate,enddate,account.industry, account.Client_Relations_Account_Owner__c,Year_1_Maintenance_Amount_3BClean__c,Year_1_Maintenance_Amount_DocXtools__c,Year_1_Maintenance_Amount_EagleEye__c,Contract_Sub_Type__c,Year_1_License_Amount_3BClean__c,Year_1_License_Amount_DocXtools__c,Year_1_License_Amount_EagleEye__c FROM Contract WHERE Id=:cont.Id];
 			
-			Decimal term = cont.Contract_Term_Length_Yrs__c;
+			
 			Decimal totalValue = 0;
 			Decimal totalServices = 0;
 			Decimal totalPerpSupport = 0;
@@ -66,7 +65,7 @@ system.debug('checking to see if the currency is pounds');
 				if (cont.Currency_Type__c.codePointAt(0) == 163)
 				
 				{
-				system.debug('currency is pounds');
+				
 				totalNewTermValue = totalNewTermValue * PoundsConversionRate;
 				totalPerpSupport =  totalPerpSupport *  PoundsConversionRate;
 				}
