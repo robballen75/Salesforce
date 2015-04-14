@@ -2,7 +2,7 @@ public with sharing class CreateOppFromContract {
 
     Opportunity    opp;
 	Contract 	   cont;
-   	
+   	String products = '';
    	
     public CreateOppFromContract(ApexPages.StandardController stdController) { 
         cont = (Contract)stdController.getRecord();     
@@ -18,7 +18,19 @@ public with sharing class CreateOppFromContract {
            
 			Contract cont = [select account.name, ID,Currency_Type__c, AccountId, name, Year1_Billing_Amount_Total__c, Year2_Billing_Amount_Total__c,Year3_Billing_Amount_Total__c,Year4_Billing_Amount_Total__c,Year_4_Billng_Amount_Services__c,Year_3_Billing_Amount_Services__c,Year_2_Billing_Amount_Services__c,Year_1_Billing_Amount_Services__c,Contract_Term_Length_Yrs__c,startdate,enddate,account.industry, account.Client_Relations_Account_Owner__c,Year_1_Maintenance_Amount_3BClean__c,Year_1_Maintenance_Amount_DocXtools__c,Year_1_Maintenance_Amount_EagleEye__c,Contract_Sub_Type__c,Year_1_License_Amount_3BClean__c,Year_1_License_Amount_DocXtools__c,Year_1_License_Amount_EagleEye__c FROM Contract WHERE Id=:cont.Id];
 			
+			for (contract_product__c cp : [select product__c, contract__r.account.industry, contract__r.account.BillingCountry from contract_product__c where contract__r.id =:cont.Id ])
+				{
+						if (products == '')
+						{
+							products = cp.product__c;
+						}
+						else if (products != '')
+						{
+							products = products + ',' + cp.product__c;
+						
+						}
 			
+				}
 			Decimal totalValue = 0;
 			Decimal totalServices = 0;
 			Decimal totalPerpSupport = 0;
@@ -36,9 +48,10 @@ public with sharing class CreateOppFromContract {
 			
 			if (totalValue == null) totalValue = 0;
 			if (totalServices == null) totalServices =0;
-			
+			system.debug(totalValue);
+			system.debug(totalServices);
 			Decimal totalNewTermValue = totalValue - totalServices;
-			
+			system.debug(totalNewTermValue);
 			CurrencyRates__c mc = CurrencyRates__c.getOrgDefaults();			
 					EuroConversionRate	= mc.EuroConversionRate__c;
 					PoundsConversionRate= mc.BritishPoundConversionRate__c;	
@@ -83,7 +96,7 @@ system.debug('checking to see if the currency is pounds');
             //Create the opportunity
             Opportunity o = new Opportunity (
             AccountID = cont.AccountId
-            ,name=cont.account.name + '- Product Renewal'
+            ,name=cont.account.name + ' - ' + products + ' Renewal'
             ,Opportunity_Start_Date__c = cont.enddate +1
             ,Product__c = 'Renewal'
             ,Related_Renewal_Contract__c = cont.id
@@ -95,6 +108,7 @@ system.debug('checking to see if the currency is pounds');
             ,Grading_Scale__c = '8-14 (solid opportunity)'
             ,Support_Amount__c = totalPerpSupport
             ,Existing_Customer__c = True
+            ,RENEWAL_Prior_Contract_Yr_3_Amount__c = totalNewTermValue
             );
             insert o;
             
