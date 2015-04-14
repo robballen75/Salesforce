@@ -58,9 +58,9 @@ public with sharing class CreateOppFromContract {
 			
 			if (cont.Contract_Sub_Type__c == 'Perpetual') 
 				{
-					if (cont.Year_1_License_Amount_3BClean__c > 0) totalPerpSupport = cont.Year_1_Maintenance_Amount_3BClean__c;
-					if (cont.Year_1_License_Amount_DocXtools__c > 0) totalPerpSupport = cont.Year_1_Maintenance_Amount_DocXtools__c;
-					if (cont.Year_1_License_Amount_EagleEye__c > 0) totalPerpSupport = cont.Year_1_Maintenance_Amount_EagleEye__c;
+					if (cont.Year_1_License_Amount_3BClean__c > 0 && cont.Year_1_Maintenance_Amount_3BClean__C != null) totalPerpSupport = cont.Year_1_Maintenance_Amount_3BClean__c;
+					if (cont.Year_1_License_Amount_DocXtools__c > 0 && cont.Year_1_Maintenance_Amount_DocXtools__c != null) totalPerpSupport = cont.Year_1_Maintenance_Amount_DocXtools__c;
+					if (cont.Year_1_License_Amount_EagleEye__c > 0 && cont.Year_1_Maintenance_Amount_EagleEye__c != null) totalPerpSupport = cont.Year_1_Maintenance_Amount_EagleEye__c;
 								
 				}
 		
@@ -78,7 +78,9 @@ system.debug('checking to see if the currency is pounds');
 				if (cont.Currency_Type__c.codePointAt(0) == 163)
 				
 				{
-				
+				system.debug('we are in pounds');
+				system.debug(totalPerpSupport);
+				system.debug(PoundsConversionRate);
 				totalNewTermValue = totalNewTermValue * PoundsConversionRate;
 				totalPerpSupport =  totalPerpSupport *  PoundsConversionRate;
 				}

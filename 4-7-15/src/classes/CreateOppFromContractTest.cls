@@ -24,9 +24,22 @@ private class CreateOppFromContractTest {
 		newCont.startDate = date.today() - 360;
 		newCont.endDate = date.today() + 90;
 		newCont.Currency_Type__c = 'other';
-	insert newCont;
-	string id = newCont.Id;
+		insert newCont;
+		string id = newCont.Id;
 
+//Set up contract product
+RecordType rt =[select name from recordtype where name = 'site licenses'];
+		
+contract_product__c cp = new contract_product__c (recordType= rt);
+	cp.Product__c='French Canadian';
+	cp.Contract__c=id;
+	insert cp;
+	
+contract_product__c cp2 = new contract_product__c (recordType= rt);
+	cp2.Product__c='DocXtools';
+	cp2.Contract__c=id;
+	insert cp2;
+		
     	
 system.debug('just started');
 test.starttest();    	
@@ -40,6 +53,20 @@ test.starttest();
    
         opportunity o = [select id,Related_Renewal_Contract__c   from opportunity where Related_Renewal_Contract__c = :newCont.id];
         system.assertEquals(newCont.id, id);
+		
+		delete o;
+		delete cp2;
+		newCont.currency_type__c = '€';
+		update newCont;
+		controller.create();
+		
+        newCont.Contract_Type__C = 'Agreement (Initial)';
+        newCont.Contract_Sub_Type__c = 'Perpetual';
+        newCont.Currency_type__c = '£';
+	    newCont.Year_1_License_Amount_3BClean__c = 100;
+	    update newCont;
+	    controller.create();
+	
 		
         test.stoptest();
         
