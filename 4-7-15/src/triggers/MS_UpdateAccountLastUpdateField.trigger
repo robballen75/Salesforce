@@ -24,10 +24,32 @@ trigger MS_UpdateAccountLastUpdateField on Account (before insert, before update
     		 || trigger.new[idx].DocXtools_Included_on_Desktop_Image__c    != trigger.old[idx].DocXtools_Included_on_Desktop_Image__c 
     		 || trigger.new[idx].DocXtools_Deployed_Groups_NEW__c    != trigger.old[idx].DocXtools_Deployed_Groups_NEW__c 
     		 || trigger.new[idx].DocXtools_Groups_Getting_High_Value__c    != trigger.old[idx].DocXtools_Groups_Getting_High_Value__c 
-    		 || trigger.new[idx].Traffic_Signal_Deployed__c    != trigger.old[idx].Traffic_Signal_Deployed__c 
     		 || trigger.new[idx].Skills_Assessment_Deployed_NEW__c    != trigger.old[idx].Skills_Assessment_Deployed_NEW__c 
     		 || trigger.new[idx].Role_based_ribbon_s_deployed__c    != trigger.old[idx].Role_based_ribbon_s_deployed__c 
-    		 || trigger.new[idx].Specal_Code_DLL_for__c != trigger.old[idx].Specal_Code_DLL_for__c)
+    		 || trigger.new[idx].Specal_Code_DLL_for__c != trigger.old[idx].Specal_Code_DLL_for__c
+    		 || trigger.new[idx].Comparison_Deployed__c != trigger.old[idx].Comparison_Deployed__c
+    		 || trigger.new[idx].MIAFD_Configured__c != trigger.old[idx].MIAFD_Configured__c
+    		 || trigger.new[idx].Numbering_TOC_Deployed__C != trigger.old[idx].Numbering_TOC_Deployed__C
+    		 || trigger.new[idx].Date_Last_Met_with_the_IT_Project_Team__c != trigger.old[idx].Date_Last_Met_with_the_IT_Project_Team__c
+    		 || trigger.new[idx].Date_Last_Met_with_Contract_Signer__c != trigger.old[idx].Date_Last_Met_with_Contract_Signer__c
+    		 || trigger.new[idx].X3BClean_Upgrade_Plans__c != trigger.old[idx].X3BClean_Upgrade_Plans__c
+    		 || trigger.new[idx].DocXtools_Upgrade_Plans__c != trigger.old[idx].DocXtools_Upgrade_Plans__c
+    		 || trigger.new[idx].EagleEye_Upgrade_Plans__c != trigger.old[idx].EagleEye_Upgrade_Plans__c
+    		 || trigger.new[idx].EagleEye_Users_Deployed__c != trigger.old[idx].EagleEye_Users_Deployed__c
+    		 || trigger.new[idx].EagleEye_Users_Licensed__c != trigger.old[idx].EagleEye_Users_Licensed__c
+    		 || trigger.new[idx].EagleEye_Version_Being_Deployed__c != trigger.old[idx].EagleEye_Version_Being_Deployed__c
+    		 || trigger.new[idx].EagleEye_Version_Deployed__c != trigger.old[idx].EagleEye_Version_Deployed__c
+    		 || trigger.new[idx].DOCID_Deployed__c != trigger.old[idx].DOCID_Deployed__c
+    		 || trigger.new[idx].DocXtools_French_Canadian_Deployed__c != trigger.old[idx].DocXtools_French_Canadian_Deployed__c
+    		 || trigger.new[idx].X3BClean_Des__c != trigger.old[idx].X3BClean_Des__c
+    		 || trigger.new[idx].X3BClean_Version_Deployed__c != trigger.old[idx].X3BClean_Version_Deployed__c
+    		 || trigger.new[idx].X3BClean_Reference__c != trigger.old[idx].X3BClean_Reference__c
+    		 || trigger.new[idx].Patent_Companion_Users_Deployed__c != trigger.old[idx].Patent_Companion_Users_Deployed__c
+    		 || trigger.new[idx].Patent_Companion_Users_Licensed__c != trigger.old[idx].Patent_Companion_Users_Licensed__c)
+    		 
+    		
+    	
+    		  
     		  {
     
     			//Update the account last updated field because one of the above was true		
@@ -48,8 +70,21 @@ trigger MS_UpdateAccountLastUpdateField on Account (before insert, before update
     		 || trigger.new[idx].Compare_Tool__c    != trigger.old[idx].Compare_Tool__c 
     		 || trigger.new[idx].TOA_Tool__c    != trigger.old[idx].TOA_Tool__c 
     		 || trigger.new[idx].X02007_Migration_Plan__c    != trigger.old[idx].X02007_Migration_Plan__c 
-    		 || trigger.new[idx].Next_Office_Version__c    != trigger.old[idx].Next_Office_Version__c 
+    		 || trigger.new[idx].DMS_Front_End_Profiling__c    != trigger.old[idx].DMS_Front_End_Profiling__c
+    		 || trigger.new[idx].Outsourced_Document_Production_Vendor__c    != trigger.old[idx].Outsourced_Document_Production_Vendor__c 
+    		 || trigger.new[idx].Abbreviation_Checker__c    != trigger.old[idx].Abbreviation_Checker__c 
+    		 || trigger.new[idx].Date_for_Office_2015__c    != trigger.old[idx].Date_for_Office_2015__c 
+    		 || trigger.new[idx].X2013_Plans__c    != trigger.old[idx].X2013_Plans__c 
+    		 || trigger.new[idx].Next_Office_Version__c    != trigger.old[idx].Next_Office_Version__c  
     		 || trigger.new[idx].Date_for_2010__c    != trigger.old[idx].Date_for_2010__c) 
+    		  
+    		  
+    		  
+    		  
+    		  
+    		  
+    		  
+    		  
     		  {
     
     				//Update the account last updated field because one of the above was true		
@@ -61,6 +96,8 @@ trigger MS_UpdateAccountLastUpdateField on Account (before insert, before update
     //specified account at a glance fields are not null    
     } else 
     	{
+    		
+    		
     		if (trigger.new[idx].customer_since_date__c != null
     		|| trigger.new[idx].KP_Renewal_Risk__c != null
     		|| trigger.new[idx].Abbreviation_Checker_Deployed__c != null
@@ -70,11 +107,32 @@ trigger MS_UpdateAccountLastUpdateField on Account (before insert, before update
     		|| trigger.new[idx].DocXtools_Included_on_Desktop_Image__c != 'No'
 	    	|| trigger.new[idx].DocXtools_Deployed_Groups_NEW__c != null
 	    	|| trigger.new[idx].DocXtools_Groups_Getting_High_Value__c != null
-	    	|| trigger.new[idx].Traffic_Signal_Deployed__c != '--none--'
-			|| trigger.new[idx].Skills_Assessment_Deployed_NEW__c != 'Unknown'
+	    	|| trigger.new[idx].Skills_Assessment_Deployed_NEW__c != 'Unknown'
 			|| trigger.new[idx].Role_based_ribbon_s_deployed__c != null	
-    		|| trigger.new[idx].Specal_Code_DLL_for__c != null)
+    		|| trigger.new[idx].Specal_Code_DLL_for__c != null
+    		|| trigger.new[idx].Comparison_Deployed__c != null
+    		 || trigger.new[idx].MIAFD_Configured__c != null
+    		 || trigger.new[idx].Numbering_TOC_Deployed__C != null
+    		 || trigger.new[idx].Date_Last_Met_with_the_IT_Project_Team__c != null
+    		 || trigger.new[idx].Date_Last_Met_with_Contract_Signer__c != null
+    		 || trigger.new[idx].X3BClean_Upgrade_Plans__c != null
+    		 || trigger.new[idx].DocXtools_Upgrade_Plans__c != null
+    		 || trigger.new[idx].EagleEye_Upgrade_Plans__c != null
+    		 || trigger.new[idx].EagleEye_Users_Deployed__c != null
+    		 || trigger.new[idx].EagleEye_Users_Licensed__c != null
+    		 || trigger.new[idx].EagleEye_Version_Being_Deployed__c != null
+    		 || trigger.new[idx].EagleEye_Version_Deployed__c != null
+    		 || trigger.new[idx].DOCID_Deployed__c != null
+    		 || trigger.new[idx].DocXtools_French_Canadian_Deployed__c != null
+    		 || trigger.new[idx].X3BClean_Des__c != null
+    		 || trigger.new[idx].X3BClean_Version_Deployed__c != null
+    		 || trigger.new[idx].X3BClean_Reference__c != false
+    		 || trigger.new[idx].Patent_Companion_Users_Deployed__c != null
+    		 || trigger.new[idx].Patent_Companion_Users_Licensed__c != null) 
+    		
     			{
+    				system.debug('just finished checking all fields for insert - going to update field');
+    				
     				//fieldUpdated = true;
     	 			trigger.new[idx].MS_AtAGlanceLastUpdatedByUser__c = currentuser;
         			trigger.new[idx].at_a_glance_last_updated__c = date.today();
@@ -92,9 +150,18 @@ trigger MS_UpdateAccountLastUpdateField on Account (before insert, before update
   				|| trigger.new[idx].MetaData_Tool__c != null
   				|| trigger.new[idx].Compare_Tool__c != null
   				|| trigger.new[idx].TOA_Tool__c != null
-  				|| trigger.new[idx].X02007_Migration_Plan__c != null
   				|| trigger.new[idx].Next_Office_Version__c != null
-  				|| trigger.new[idx].Date_for_2010__c != null)
+  				|| trigger.new[idx].Date_for_2010__c != null
+  				|| trigger.new[idx].DMS_Front_End_Profiling__c    != null
+    		 || trigger.new[idx].Outsourced_Document_Production_Vendor__c    != null 
+    		 || trigger.new[idx].TOA_Tool__c    != null 
+    		 || trigger.new[idx].Abbreviation_Checker__c    != null 
+    		 || trigger.new[idx].Date_for_Office_2015__c    != null 
+    		 || trigger.new[idx].X2013_Plans__c    != null 
+    		 || trigger.new[idx].Next_Office_Version__c    != null  
+    		 || trigger.new[idx].Date_for_2010__c    != null) 
+  				
+  				
     				{
 	        			trigger.new[idx].MSAccountEnvironmentLast_Updated_By__c = currentuser;
         				trigger.new[idx].last_updated__c = date.today();

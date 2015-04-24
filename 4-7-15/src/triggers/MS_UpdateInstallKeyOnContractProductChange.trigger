@@ -41,13 +41,14 @@ if (system.trigger.isUpdate || system.trigger.isInsert) {
 
     
     // Look up account and industry for current contract:contract/product
-        contract_product__c Customer = [select contract__r.account.id, contract__r.account.industry, contract__r.account.BillingCountry from contract_product__c where contract_product__c.id = :trigger.new[0].id];
+        contract_product__c Customer = [select contract__r.id, contract__r.account.id, contract__r.account.industry, contract__r.account.BillingCountry from contract_product__c where contract_product__c.id = :trigger.new[0].id];
         CustomerId = customer.contract__r.account.Id;       
         CustomerIndustry = customer.contract__r.account.industry;
         CustomerCountry = customer.contract__r.account.BillingCountry;
         system.debug('customerid=' + CustomerId);
         system.debug('customerindustry=' + CustomerIndustry);
         system.debug('cusotmerCountry=' + CustomerCountry);
+        system.debug('contractId=' + customer.contract__r.id);
     // Generate the Region and Industry parts of the install key.  Always need to do this, so no need to be in the loop.
     
     if (CustIndustry == '')
