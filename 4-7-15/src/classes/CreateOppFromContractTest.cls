@@ -56,13 +56,13 @@ test.starttest();
 		
 		delete o;
 		delete cp2;
-		newCont.currency_type__c = '€';
+		newCont.currency_type__c = '�';
 		update newCont;
 		controller.create();
 		
         newCont.Contract_Type__C = 'Agreement (Initial)';
         newCont.Contract_Sub_Type__c = 'Perpetual';
-        newCont.Currency_type__c = '£';
+        newCont.Currency_type__c = '�';
 	    newCont.Year_1_License_Amount_3BClean__c = 100;
 	    update newCont;
 	    controller.create();
