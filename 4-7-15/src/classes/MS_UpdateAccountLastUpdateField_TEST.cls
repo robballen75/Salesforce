@@ -79,10 +79,10 @@ private class MS_UpdateAccountLastUpdateField_TEST
 		a5.name = 'Test Company';
 		a5.industry = 'other';
 		a5.Customer_Since_Date__c = testdate;
-    	a5.KP_Renewal_Risk__c = 'test';
-    	a5.Abbreviation_Checker_Deployed__c = 'test';
+    	
+    	
     	a5.DocXtools_Version__c = 'test';
-    	a5.DocXtools_Version_Being_Deployed__c = 'test';
+    
 	    a5.DocXtools_Deployment_Status__c  = 'test';
     	a5.DocXtools_Included_on_Desktop_Image__c = 'test';
 	    a5.DocXtools_Deployed_Groups_NEW__c = 'test';
@@ -90,21 +90,8 @@ private class MS_UpdateAccountLastUpdateField_TEST
     	a5.Traffic_Signal_Deployed__c  = 'test';
     	a5.Skills_Assessment_Deployed_NEW__c  = 'test';
     	a5.Role_based_ribbon_s_deployed__c  = 'test';
-	    a5.D3_version_deployed__c  = 'test';
-    	a5.D3_Version_Being_Deployed__c  = 'test';
-    	a5.D3_Deployment_Status__c  = 'test';
-	    a5.D3_Included_on_Desktop_Image__c  = 'test';
-    	a5.D3_Deployed_Groups__c  = 'test';
-    	a5.D3_Groups_Getting_High_Value__c  = 'test';
-    	a5.D3_Practice_Solution_s__c  = 'test';
-    	a5.LTP_version_deployed__c  = 'test';
-    	a5.LTP_Version_Being_Deployed__c   = 'test';
-    	a5.LTP_Deployment_Status__c  = 'test';
-    	a5.LTP_Included_on_Desktop_Image__c = 'Yes';
-    	a5.LTP_Deployed_Groups__c  = 'test';
-    	a5.LTP_Groups_Getting_High_Value__c  = 'test';
-    	a5.Specal_Code_DLL_for__c = 'test';
-    	a5.Special_Code_DLL_Notes__c = 'test';
+	   
+    	
     	a5.Primary_Operating_Systems__c= 'test';
     	a5.PrimaryWordProc__c = 'test';
     	a5.Email_System__c = 'test';
@@ -116,7 +103,7 @@ private class MS_UpdateAccountLastUpdateField_TEST
     	a5.TOA_Tool__c = 'test';
     	a5.X02007_Migration_Plan__c = 'test';
     	a5.Next_Office_Version__c = 'test';
-    	a5.Date_for_Word_2003__c =testdate;
+    	
     	a5.Date_for_Word_2007__c =testdate;
     	a5.Date_for_2010__c =testdate;
     	
