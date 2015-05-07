@@ -116,7 +116,7 @@ private class MS_CloudServiceActions_TEST {
 		    testEnvelope.fromAddress = 'user@acme.com';
    			createIndividualContractEmail.subject = 'Please contact me';
     		createIndividualContractEmail.fromName = 'Test From Name';
-    		createIndividualContractEmail.plainTextBody = '<action>CREATECONTRACT</action><contractType>INDIVIDUAL</contractType><MSSecureContactID> a573f7e0-0f94-45c5-a573-6a674b360b34</MSSecureContactID><MSSubscriptionID> d20a006b-79a1-4d59-8c25-cae91f47e988</MSSubscriptionID><contractLength>90</contractLength><amount>150.50</amount><subscriptionExpirationDate>2/3/15</subscriptionExpirationDate><userCount>124</userCount>';
+    		createIndividualContractEmail.plainTextBody = '<action>CREATECONTRACT</action><contractType>INDIVIDUAL</contractType><MSSecureContactID> a573f7e0-0f94-45c5-a573-6a674b360b34</MSSecureContactID><MSSubscriptionID> d20a006b-79a1-4d59-8c25-cae91f47e988</MSSubscriptionID><contractLength>90</contractLength><amount>150.50</amount><subscriptionExpirationDate>2/3/15</subscriptionExpirationDate><userCount>124</userCount><productFeatures>Defined Terms|References</productFeatures>';
   			MS_CloudServiceActions_v2 mailer = new MS_CloudServiceActions_v2();
     		test.startTest();
     		Messaging.InboundEmailResult result = mailer.handleInboundEmail(createIndividualContractEmail, testEnvelope);

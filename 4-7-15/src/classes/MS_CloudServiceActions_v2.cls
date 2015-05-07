@@ -35,6 +35,7 @@ String year3Billing = '';
 String year4Billing = '';
 String downloadFileName = '';
 String downloadDateTime = '';
+String productFeatures = '';
 
 
 	//Try to parse the email for all the data parts we need
@@ -43,6 +44,13 @@ String downloadDateTime = '';
 	  		{
 	  		downloadFileName = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<downloadFileName>')+18,email.plainTextBody.indexOfIgnoreCase('</downloadFileName>')).trim();
 	  		system.debug('downloadFileName=' + downloadFileName);
+	  		}
+	  		catch (exception e)
+	  		{system.debug('exception parsing downloadFileName');}
+	  		try
+	  		{
+	  		productFeatures = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<productFeatures>')+17,email.plainTextBody.indexOfIgnoreCase('</productFeatures>')).trim();
+	  		system.debug('productFeatures=' + productFeatures);
 	  		}
 	  		catch (exception e)
 	  		{system.debug('exception parsing downloadFileName');}
@@ -233,7 +241,33 @@ String downloadDateTime = '';
  		return result;
  		}
  		
-    
+ //Check to see if the action is "UPDATEFEATURES" - if so, remove all contract products and add new valid ones.
+ 		if (action == 'UPDATEFEATURES')
+ 		{
+ 			RecordType rt = [select Id from RecordType where Name = 'User Licenses' and SobjectType = 'Contract_Product__c' limit 1];
+			String[] productFeaturesArray = productFeatures.split('--',0); 			
+ 			Contract checkContract = [Select ID from Contract where MSSubscriptionID__c = :MSSubscriptionID];
+ 			deleteContractProducts(checkContract.id);
+			createContractProduct(checkContract.id, product, rt.id);	
+				for (Integer i = 0; i < productFeaturesArray.size(); i++)
+					 {  
+								
+    				createContractProduct (checkContract.id, productFeaturesArray[i], rt.id);	
+    												
+					 }
+
+ 			result.success = true;
+				return result;
+ 		}
+ 		
+ 	//Check to see if action is "UPDATEUSERCOUNT" - if so, just update the number of users on an existing contract
+ 		if (action == 'UPDATEUSERCOUNT')
+		{
+				changeContractUserCount(MSSecureContactID, userCount);
+				result.success = true;
+				return result;		
+		}  
+ 		
     
  //Check to see if the action is "UPDATECONTACT" - if so, call update function.
 		if (action == 'UPDATECONTACT')
@@ -267,7 +301,7 @@ String downloadDateTime = '';
  system.debug('checking to see if we should create a contract - type=' + contractType);
  		if (action == 'CREATECONTRACT' && (contractType == 'EVAL' || contractType =='INDIVIDUAL' || contractType =='RENEW'))
  		{
-			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing);
+			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures);
 			result.success = true;
 			return result;
  		}
@@ -276,7 +310,7 @@ String downloadDateTime = '';
  //Check to see if the action is "CREATEGROUPCONTRACT" - if so, create firm contract
  			if (action == 'CREATEGROUPCONTRACT')
  			{
- 			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing);
+ 			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures);
  			result.success = true;
 			return result;
  			}
@@ -410,7 +444,8 @@ String downloadDateTime = '';
     			String emailDomainBlackList = 'mailinator.com,trashmail.net,trbvm.com,gmail.com,yahoo.com,msn.com,outlook.com,me.com,icloud.com,hotmail.com,aol.com,hushmail.com,lycos.com,mail.com,rackspace.net,live.com,earthlink.net';
     			system.debug('MSSecureContactID for create contact =' + MSSecureContactID);
     			String accountID = '';
-    			Integer domainInBlacklist = emailDomainBlackList.indexOfIgnoreCase(domainBody);	
+    			Integer domainInBlacklist = emailDomainBlackList.indexOfIgnoreCase(domainBody);
+    			system.debug('domaininblacklist=' + domainInBlackList);	
     			String leadOwner = '';
 				String leadOwnerEmail = '';
 				String leadId = '';
@@ -517,6 +552,7 @@ String downloadDateTime = '';
 					               		insert acct;
 					               		accountId = acct.id;
 									} else if (domainInBlackList != -1)
+									system.debug('domain was in blacklist');
 									{
 										
 										try
@@ -621,7 +657,7 @@ String downloadDateTime = '';
     			
 		    }
 		    
-	public static void createContract(String ContractType,String MSSecureContactID, String SFAccountID, String MSSubscriptionID, String product,  String billingAmount, String subscriptionExpirationDate, String userCount,String promoCode,String year1billing,String year2billing,String year3billing,String year4billing)
+	public static void createContract(String ContractType,String MSSecureContactID, String SFAccountID, String MSSubscriptionID, String product,  String billingAmount, String subscriptionExpirationDate, String userCount,String promoCode,String year1billing,String year2billing,String year3billing,String year4billing, String productFeatures)
 		    {
 		    	String accountId = '';
 		    	String contactId = '';
@@ -630,6 +666,10 @@ String downloadDateTime = '';
 		    	String lastName = '';
 		    	Decimal origBillingAmount = 0;
 		    	String period = ' month ';
+		    	String[] productFeaturesArray = productFeatures.split('--',0);
+		    	
+		    	system.debug('featuresarrayitem=' + productFeaturesArray[0]);
+		    	
 		    	Date subscriptionExpirationDateAsDate = Date.parse(subscriptionExpirationDate);
 		    	Integer userCountInt = integer.valueOf(userCount);
 		    	if (userCountInt == 0 || userCountInt == null){
@@ -644,14 +684,22 @@ String downloadDateTime = '';
 		    	if (year2billing  != '') year2billingInt = integer.valueOf(year2billing);
 		    	if (year3billing  != '') year3billingInt = integer.valueOf(year3billing);
 		    	if (year4billing  != '') year4billingInt = integer.valueOf(year4billing);
+		    	if (year1billing == '') year1billingInt = decimal.valueOf(billingAmount).intValue();
+		    	
 		    	if (product == 'PATENT'){
 		    		product ='Patent Companion';
 		    	}
 		    	
-		    	string contractLength = String.valueOf(date.today().monthsBetween(subscriptionExpirationDateAsDate));
+		    	if (product == ''){
+		    		product = 'Patent Companion';
+		    	}
+		    	system.debug('product=' + product);
+		    	string contractLengthMonths = String.valueOf(date.today().monthsBetween(subscriptionExpirationDateAsDate));
+		    	string contractLengthYears = String.valueOf((date.today().monthsBetween(subscriptionExpirationDateAsDate)/12));
+		    	system.debug('contractlengthyears=' + contractLengthYears);
 	//Set period variable to either month or day, based on term
-		system.debug('contractlength months between=' + contractLength);
-		if (contractLength == '0'){
+		system.debug('contractlength months between=' + contractLengthMonths);
+		if (contractLengthMonths == '0'){
 			period = ' day ';
 			} 	
 		
@@ -786,14 +834,10 @@ String downloadDateTime = '';
 							newContract.EndDate = subscriptionExpirationDateAsDate;
 							newContract.Activation_End_Date_WF__c = subscriptionExpirationDateAsDate;
 							newContract.MSSubscriptionID__c = MSSubscriptionID;
-							
-							if (product == 'Patent Companion') {							
 							newContract.Contract_Sub_Type__c = 'Subscription';
-							}
-							
 							newContract.Original_Contract_Date__c = date.today();
 							newContract.online_subscription_revenue_original__c = billingAmountInt;
-							
+							newContract.ContractTerm = Integer.valueOf(contractLengthMonths);
 							if (product == 'Patent Companion') {
 							newContract.product__c = 'Patent Companion';
 							}
@@ -826,19 +870,25 @@ String downloadDateTime = '';
 											updateContact.Patent_Companion_Trial_Initiated__c = true;
 											updateContact.Patent_companion_trial_start__c = date.today();
 											updateContact.Patent_Companion_trial_end__c = subscriptionExpirationDateAsDate;
+											updateContact.patent_companion__c = true;
+											}
+											If (product=='EagleEye'){
+												updateContact.EagleEye__c = true;
 											}
 											updateContract.promotion_code__c = promocode;
+											
 											update updateContact;
 									}
 							 else if (ContractType == 'INDIVIDUAL') 
 									{
 											updateContract.ContractIndividual__c = ContactId;										
-											updateContract.Description = product + ' ' + contractLength  + period + 'contract for ' + firstName + ' ' + lastName;
+											updateContract.Description = product + ' ' + contractLengthMonths  + period + 'contract for ' + firstName + ' ' + lastName;
 											updateContract.Contract_Type__c = 'Agreement (Initial)';
 											updateContract.Name = firstName + ' ' + lastName + ' - ' + date.today().year() + '/' + date.today().month() + '/' + date.today().day() + ' ' +  product;
 											updateContract.EndDate = subscriptionExpirationDateAsDate;
 											updateContract.Activation_End_Date_WF__c = subscriptionExpirationDateAsDate;
 											updateContract.promotion_code__c = promocode;
+											
 											
 											if (MSSecureContactID != '')
 												    {
@@ -880,12 +930,10 @@ String downloadDateTime = '';
 							 else if (ContractType == 'RENEW') 
 									{
 											updateContract.EndDate = subscriptionExpirationDateAsDate;
-											
 											updateContract.Activation_End_Date_WF__c = subscriptionExpirationDateAsDate;
-											
 											updateContract.ContractIndividual__c = ContactId;
 											updateContract.Name = firstName + ' ' + lastName + ' - ' + date.today().year() + '/' + date.today().month() + '/' + date.today().day() +  ' ' + product;
-											updateContract.Description = product + ' ' + contractLength + period + 'renewal for ' + firstName + ' ' + lastName;
+											updateContract.Description = product + ' ' + contractLengthMonths + period + 'renewal for ' + firstName + ' ' + lastName;
 											//updateContract.online_subscription_revenue_to_date__c = origBillingAmount + billingAmountInt;
 											updateContract.Contract_Type__c = 'Renewal';
 											updateContract.promotion_code__c = promocode;
@@ -893,7 +941,7 @@ String downloadDateTime = '';
 							else if (ContractType == 'GROUP')
 									{
 											updateContract.Name = accountNameFromID + ' - ' + date.today().year() + '/' + date.today().month() + '/' + date.today().day() +  ' ' + product;
-											updateContract.Description = product + ' ' + contractLength + period + 'contract for ' + accountNameFromID;
+											updateContract.Description = product + ' ' + contractLengthMonths + period + 'contract for ' + accountNameFromID;
 											updateContract.Contract_Type__c = 'Agreement (Initial)';
 											system.debug('what kind of contract is this/' + product);
 											
@@ -917,7 +965,8 @@ String downloadDateTime = '';
 											
 									}
 							
-							updateContract.Contract_Term_Length_Yrs__c = 0;
+							updateContract.Contract_Term_Length_Yrs__c = Decimal.valueOf(contractLengthYears);
+							updateContract.ContractTerm = Integer.valueOf(contractLengthMonths);
 							updateContract.Contract_Sub_Type__c = 'Subscription';
 							system.debug('billingamountint=');
 							system.debug(billingAmountInt);
@@ -930,36 +979,27 @@ String downloadDateTime = '';
 										{
 										updateContract.year_1_billing_amount_patent_companion__c = billingAmountInt;
 										}
+										
+										
+										
 								update updateContract;
 						
-							
-							contract_product__c [] checkCP = [select Product__c from contract_product__c where contract__c = :updateContract.id];
-							system.debug('just checked to see if there was an existing contract product');
-							if (checkCP.size() == 0 | checkCP.size() == null)
-							{
-							system.debug('there was no existing contract product.');
-							//Create the eval contract's contract product			
 							RecordType rt = [select Id from RecordType where Name = 'User Licenses' and SobjectType = 'Contract_Product__c' limit 1];
-							system.debug('recordtrype=' + rt.id);
 							
-							contract_product__c newCP = new contract_product__c();
-							newCP.Contract__c = updateContract.id;
-							system.debug('newCP contract = '+updatecontract.id);
+							system.debug('I am going to delete all contract products');
+							deleteContractProducts (updateContract.id);
+							system.debug('now I am creating the primary contract product');
+							createContractProduct (updateContract.id, product, rt.id);
 							
-							if (product == 'Patent Companion'){
-							newCP.Product__c = 'Patent Companion';
-							system.debug('product = patent companion');	
-							}
+							system.debug('productFeaturesArraySize=' + productFeaturesArray.size());
+							system.debug('now I am going to create contract products for all of the feature areas');
+							for (Integer i = 0; i < productFeaturesArray.size(); i++)
+								 {  
+							     createContractProduct (updateContract.id, productFeaturesArray[i], rt.id);	
+    												
+								 }
 							
-							if (product == 'EagleEye'){
-							newCP.Product__c = 'EagleEye';
-							}
 							
-							newCP.RecordTypeID = rt.id;
-							system.debug('inserting the cp now!');
-							insert newCP;
-							
-							}
 								updateContract.Status = 'ACTIVE';
 								system.debug('updateContractName=' + updateContract.name);
 								update updateContract;
@@ -980,6 +1020,25 @@ String downloadDateTime = '';
 		   
 		   
 		    }
+		    
+		    public static void deleteContractProducts (String contractID)
+		    		{
+		    		contract_product__c [] CPs = [select Product__c from contract_product__c where contract__c = :contractID ];
+		    		delete CPs;
+		    		}
+		    
+		    public static void createContractProduct (String contractId, String Product, String recordTypeId)
+		    		{
+		    			
+		    			 if (product != ''){
+		    					contract_product__c newCP = new contract_product__c();
+    							newCP.Contract__c = contractId;
+    							newCP.Product__c =Product;
+    							newCP.RecordTypeID = recordTypeId;
+    							insert newCP;
+		    			 }
+				    } 
+		    
 		    
 	public static void connectUserToFirmContract(String MSSubscriptionID, String MSSecureContactID)
 			{
@@ -1025,6 +1084,41 @@ String downloadDateTime = '';
 			
 			}
 			
+			
+			public static void changeContractUserCount(String MSSubscriptionID, String userCount) 
+			{
+			
+			try
+			{
+				
+			system.debug('in the change contract user count function');
+			
+  				
+  				Contract [] contractArray = [Select id from Contract where MSSubscriptionID__c = :MSSubscriptionID];
+  						
+  						if (contractArray.size() > 0)
+  						
+  						{
+  							
+		  						system.debug('found a contract array - now need to update user count.');
+		  						for(Integer a = 0; a < contractArray.size(); a++)
+			  						{
+			  						system.debug('set status to dropped for contract contract #' + contractArray[a].id);
+			  						contractArray[a].status = 'DROPPED';
+			  						contractArray[a].Description = 'Contract dropped via customer request via Secure portal';
+			  						update contractArray[a];
+									}
+  						}	
+  				
+  						
+			}
+			catch (exception e)
+					{
+						handleErrorAndSendEmail('Error cancelling contract  ' + MSSubscriptionID,e.getmessage());	
+					}
+			}
+			
+			
 			public static void cancelContracts(String MSSubscriptionID) 
 			{
 			
@@ -1069,7 +1163,7 @@ String downloadDateTime = '';
 		    
 		    try
 		    {
-		    	contact [] DLContact = [select id, AccountId, account.name from contact where email = :userEmail limit 1];
+		    	contact [] DLContact = [select id, AccountId, account.name from contact where MSSecureContactID__c = :MSSecureContactID limit 1];
 		    	
 							
 							if (DLContact.size() == 0 | DLContact.size() == null)
