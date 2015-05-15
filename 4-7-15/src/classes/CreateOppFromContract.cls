@@ -18,7 +18,7 @@ public with sharing class CreateOppFromContract {
            
 			Contract cont = [select account.name, ID,Currency_Type__c, AccountId, name, Year1_Billing_Amount_Total__c, Year2_Billing_Amount_Total__c,Year3_Billing_Amount_Total__c,Year4_Billing_Amount_Total__c,Year_4_Billng_Amount_Services__c,Year_3_Billing_Amount_Services__c,Year_2_Billing_Amount_Services__c,Year_1_Billing_Amount_Services__c,Contract_Term_Length_Yrs__c,startdate,enddate,account.industry, account.Client_Relations_Account_Owner__c,Year_1_Maintenance_Amount_3BClean__c,Year_1_Maintenance_Amount_DocXtools__c,Year_1_Maintenance_Amount_EagleEye__c,Contract_Sub_Type__c,Year_1_License_Amount_3BClean__c,Year_1_License_Amount_DocXtools__c,Year_1_License_Amount_EagleEye__c FROM Contract WHERE Id=:cont.Id];
 			
-			for (contract_product__c cp : [select product__c, contract__r.account.industry, contract__r.account.BillingCountry from contract_product__c where contract__r.id =:cont.Id ])
+			for (contract_product__c cp : [select product__c, contract__r.account.industry, contract__r.account.BillingCountry from contract_product__c where contract__r.id =:cont.Id and product__c != 'Services' ])
 				{
 						if (products == '')
 						{
@@ -110,6 +110,8 @@ system.debug('checking to see if the currency is pounds');
             ,Grading_Scale__c = '8-14 (solid opportunity)'
             ,Support_Amount__c = totalPerpSupport
             ,Existing_Customer__c = True
+            ,RENEWAL_New_Contract_Start_Date__c = cont.enddate +1
+            ,RENEWAL_Old_Contract_End_Date__c = cont.enddate
             ,RENEWAL_Prior_Contract_Yr_3_Amount__c = totalNewTermValue
             );
             insert o;

@@ -36,10 +36,17 @@ String year4Billing = '';
 String downloadFileName = '';
 String downloadDateTime = '';
 String productFeatures = '';
-
+String promoDiscount = '';
 
 	//Try to parse the email for all the data parts we need
 			
+			try
+	  		{
+	  		promoDiscount = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<promoDiscount>')+18,email.plainTextBody.indexOfIgnoreCase('</promoDiscount>')).trim();
+	  		system.debug('promoDiscount=' + promoDiscount);
+	  		}
+	  		catch (exception e)
+	  		{system.debug('exception parsing downloadFileName');}
 			try
 	  		{
 	  		downloadFileName = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<downloadFileName>')+18,email.plainTextBody.indexOfIgnoreCase('</downloadFileName>')).trim();
@@ -301,7 +308,7 @@ String productFeatures = '';
  system.debug('checking to see if we should create a contract - type=' + contractType);
  		if (action == 'CREATECONTRACT' && (contractType == 'EVAL' || contractType =='INDIVIDUAL' || contractType =='RENEW'))
  		{
-			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures);
+			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount);
 			result.success = true;
 			return result;
  		}
@@ -310,7 +317,7 @@ String productFeatures = '';
  //Check to see if the action is "CREATEGROUPCONTRACT" - if so, create firm contract
  			if (action == 'CREATEGROUPCONTRACT')
  			{
- 			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures);
+ 			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount);
  			result.success = true;
 			return result;
  			}
@@ -657,7 +664,7 @@ String productFeatures = '';
     			
 		    }
 		    
-	public static void createContract(String ContractType,String MSSecureContactID, String SFAccountID, String MSSubscriptionID, String product,  String billingAmount, String subscriptionExpirationDate, String userCount,String promoCode,String year1billing,String year2billing,String year3billing,String year4billing, String productFeatures)
+	public static void createContract(String ContractType,String MSSecureContactID, String SFAccountID, String MSSubscriptionID, String product,  String billingAmount, String subscriptionExpirationDate, String userCount,String promoCode,String year1billing,String year2billing,String year3billing,String year4billing, String productFeatures, String promoDiscount)
 		    {
 		    	String accountId = '';
 		    	String contactId = '';
@@ -665,7 +672,7 @@ String productFeatures = '';
 		    	String firstName = '';
 		    	String lastName = '';
 		    	Decimal origBillingAmount = 0;
-		    	String period = ' month ';
+		    	String period = ' year ';
 		    	String[] productFeaturesArray = productFeatures.split('--',0);
 		    	
 		    	system.debug('featuresarrayitem=' + productFeaturesArray[0]);
@@ -675,6 +682,8 @@ String productFeatures = '';
 		    	if (userCountInt == 0 || userCountInt == null){
 		    		userCountInt = 1;
 		    	}
+		    	if (billingAmount == null || billingamount == '') billingAmount = '0';
+		    	
 		    	Integer year1billingInt = 0;
 		    	Integer year2billingInt = 0;
 		    	Integer year3billingInt = 0;
@@ -696,13 +705,28 @@ String productFeatures = '';
 		    	system.debug('product=' + product);
 		    	string contractLengthMonths = String.valueOf(date.today().monthsBetween(subscriptionExpirationDateAsDate));
 		    	string contractLengthYears = String.valueOf((date.today().monthsBetween(subscriptionExpirationDateAsDate)/12));
+		    	string contractLengthDays = String.valueof((date.today().daysBetween(subscriptionExpirationDateAsDate)));
+		    	string contractLengthForDescription = '';
 		    	system.debug('contractlengthyears=' + contractLengthYears);
+		    	system.debug('contractLengthMonths=' + contractLengthMonths);
+		    	system.debug('contractLengthDays=' + contractLengthDays);
+	
 	//Set period variable to either month or day, based on term
-		system.debug('contractlength months between=' + contractLengthMonths);
-		if (contractLengthMonths == '0'){
-			period = ' day ';
-			} 	
 		
+		if (integer.valueOf(contractLengthMonths) > 12) {
+			period = ' year ';
+			contractLengthForDescription = contractLengthYears;
+				}
+		if (integer.valueOf(contractLengthMonths) > 0 && integer.valueOf(contractLengthMonths) <= 12) {
+			period = ' month ';
+			contractLengthForDescription = contractLengthMonths;
+				}	
+		if (contractLengthMonths == '0' &&  integer.valueOf(contractLengthDays) > 0) {
+			period = ' day ';
+			contractLengthForDescription = contractLengthDays;
+			contractLengthMonths = '1';
+		}
+		 
 		
 			
 	//Try to get the SF Contact from the passed in MSSecureContactID
@@ -875,19 +899,21 @@ String productFeatures = '';
 											If (product=='EagleEye'){
 												updateContact.EagleEye__c = true;
 											}
-											updateContract.promotion_code__c = promocode;
+											if (promocode != '') updateContract.promotion_code__c = promocode;
+											if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
 											
 											update updateContact;
 									}
 							 else if (ContractType == 'INDIVIDUAL') 
 									{
 											updateContract.ContractIndividual__c = ContactId;										
-											updateContract.Description = product + ' ' + contractLengthMonths  + period + 'contract for ' + firstName + ' ' + lastName;
+											updateContract.Description = product + ' ' + contractLengthForDescription  + ' ' +  period + ' contract for ' + firstName + ' ' + lastName;
 											updateContract.Contract_Type__c = 'Agreement (Initial)';
 											updateContract.Name = firstName + ' ' + lastName + ' - ' + date.today().year() + '/' + date.today().month() + '/' + date.today().day() + ' ' +  product;
 											updateContract.EndDate = subscriptionExpirationDateAsDate;
 											updateContract.Activation_End_Date_WF__c = subscriptionExpirationDateAsDate;
-											updateContract.promotion_code__c = promocode;
+											if (promocode != '') updateContract.promotion_code__c = promocode;
+											if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
 											
 											
 											if (MSSecureContactID != '')
@@ -933,15 +959,16 @@ String productFeatures = '';
 											updateContract.Activation_End_Date_WF__c = subscriptionExpirationDateAsDate;
 											updateContract.ContractIndividual__c = ContactId;
 											updateContract.Name = firstName + ' ' + lastName + ' - ' + date.today().year() + '/' + date.today().month() + '/' + date.today().day() +  ' ' + product;
-											updateContract.Description = product + ' ' + contractLengthMonths + period + 'renewal for ' + firstName + ' ' + lastName;
+											updateContract.Description = product + ' ' + contractLengthForDescription + ' '  + period + ' renewal for ' + firstName + ' ' + lastName;
 											//updateContract.online_subscription_revenue_to_date__c = origBillingAmount + billingAmountInt;
 											updateContract.Contract_Type__c = 'Renewal';
-											updateContract.promotion_code__c = promocode;
+											if (promocode != '') updateContract.promotion_code__c = promocode;
+											if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
 									}
 							else if (ContractType == 'GROUP')
 									{
 											updateContract.Name = accountNameFromID + ' - ' + date.today().year() + '/' + date.today().month() + '/' + date.today().day() +  ' ' + product;
-											updateContract.Description = product + ' ' + contractLengthMonths + period + 'contract for ' + accountNameFromID;
+											updateContract.Description = product + ' ' + contractLengthForDescription + ' ' + period + ' contract for ' + accountNameFromID;
 											updateContract.Contract_Type__c = 'Agreement (Initial)';
 											system.debug('what kind of contract is this/' + product);
 											
