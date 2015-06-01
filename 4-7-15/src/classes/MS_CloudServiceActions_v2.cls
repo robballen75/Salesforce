@@ -42,7 +42,7 @@ String promoDiscount = '';
 			
 			try
 	  		{
-	  		promoDiscount = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<promoDiscount>')+18,email.plainTextBody.indexOfIgnoreCase('</promoDiscount>')).trim();
+	  		promoDiscount = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<promoDiscount>')+15,email.plainTextBody.indexOfIgnoreCase('</promoDiscount>')).trim();
 	  		system.debug('promoDiscount=' + promoDiscount);
 	  		}
 	  		catch (exception e)
@@ -295,7 +295,17 @@ String promoDiscount = '';
 		}
 		
 //Check to see if the action is "CREATECONTRACT" and the  contractType is "GROUP" - if so, call associate funciton and exit.
+//Will deprecate this function with Subway - will become action of 'ASSOCIATE' and contractType = GROUP
 		if (action=='CREATECONTRACT' && contractType == 'GROUP')
+		{
+			connectUserToFirmContract(MSSubscriptionID,MSSecureContactID);
+			result.success = true;
+			return result;
+		}
+		
+		
+		//Check to see if the action is "CREATECONTRACT" and the  contractType is "GROUP" - if so, call associate funciton and exit.
+		if (action=='ASSOCIATE' && contractType == 'GROUP')
 		{
 			connectUserToFirmContract(MSSubscriptionID,MSSecureContactID);
 			result.success = true;
@@ -414,7 +424,7 @@ String promoDiscount = '';
 						if (accountID != unknownEmploymentAccount.id && originalAccountNameCanBeUpdated != -1) 
 						
 						{
-							system.debug('accountID was not unknownemploymentaccoutn and orig not -1');
+							system.debug('accountID was not unknownemploymentaccount and orig not -1');
 							system.debug('account name passed, contact not currently connected to Employment Unknown account.  Will update name.');
 							account updateAccount = [select id from Account where id = :accountId];	
 							updateAccount.name = accountName + ' (via online submission-please verify)';
@@ -678,27 +688,30 @@ String promoDiscount = '';
 		    	system.debug('featuresarrayitem=' + productFeaturesArray[0]);
 		    	
 		    	Date subscriptionExpirationDateAsDate = Date.parse(subscriptionExpirationDate);
+		    	
 		    	Integer userCountInt = integer.valueOf(userCount);
 		    	if (userCountInt == 0 || userCountInt == null){
 		    		userCountInt = 1;
 		    	}
+		    	
 		    	if (billingAmount == null || billingamount == '') billingAmount = '0';
 		    	
-		    	Integer year1billingInt = 0;
-		    	Integer year2billingInt = 0;
-		    	Integer year3billingInt = 0;
-		    	Integer year4billingInt = 0;
+		    	decimal year1billingInt = 0;
+		    	decimal year2billingInt = 0;
+		    	decimal year3billingInt = 0;
+		    	decimal year4billingInt = 0;
 		    	
-		    	if (year1billing  != '') year1billingInt = integer.valueOf(year1billing); 
-		    	if (year2billing  != '') year2billingInt = integer.valueOf(year2billing);
-		    	if (year3billing  != '') year3billingInt = integer.valueOf(year3billing);
-		    	if (year4billing  != '') year4billingInt = integer.valueOf(year4billing);
+		    	if (year1billing  != '') year1billingInt = decimal.valueOf(year1billing); 
+		    	if (year2billing  != '') year2billingInt = decimal.valueOf(year2billing);
+		    	if (year3billing  != '') year3billingInt = decimal.valueOf(year3billing);
+		    	if (year4billing  != '') year4billingInt = decimal.valueOf(year4billing);
 		    	if (year1billing == '') year1billingInt = decimal.valueOf(billingAmount).intValue();
 		    	
 		    	if (product == 'PATENT'){
 		    		product ='Patent Companion';
 		    	}
 		    	
+		    	//Temporary hack to deal with the online portal not passing in a product.  Until multi products are implemented in the online portal, all calls will be for Patent Companion.
 		    	if (product == ''){
 		    		product = 'Patent Companion';
 		    	}
@@ -707,11 +720,12 @@ String promoDiscount = '';
 		    	string contractLengthYears = String.valueOf((date.today().monthsBetween(subscriptionExpirationDateAsDate)/12));
 		    	string contractLengthDays = String.valueof((date.today().daysBetween(subscriptionExpirationDateAsDate)));
 		    	string contractLengthForDescription = '';
+		    	
 		    	system.debug('contractlengthyears=' + contractLengthYears);
 		    	system.debug('contractLengthMonths=' + contractLengthMonths);
 		    	system.debug('contractLengthDays=' + contractLengthDays);
 	
-	//Set period variable to either month or day, based on term
+	//Set period variable to year, month or day, based on term
 		
 		if (integer.valueOf(contractLengthMonths) > 12) {
 			period = ' year ';
@@ -862,18 +876,13 @@ String promoDiscount = '';
 							newContract.Original_Contract_Date__c = date.today();
 							newContract.online_subscription_revenue_original__c = billingAmountInt;
 							newContract.ContractTerm = Integer.valueOf(contractLengthMonths);
-							if (product == 'Patent Companion') {
-							newContract.product__c = 'Patent Companion';
-							}
-							if (product == 'EagleEye') {
-							newContract.product__c = 'EagleEye';
-							}
+							newContract.product__c = product;
 							insert newContract;
 							system.debug('just made a new contract - here is the ID=' + newContract.id);
 							updateContractId = newContract.id;
 					}
 					
-							contract updateContract = [select ID, MSSubscriptionID__c, online_subscription_revenue_to_date__c from Contract where id = :updateContractId];
+							contract updateContract = [select ID, MSSubscriptionID__c, online_subscription_revenue_to_date__c,year_1_billing_amount_patent_Companion__c, year_2_billing_amount_patent_Companion__c,year_3_billing_amount_patent_Companion__c,year_4_billing_amount_patent_Companion__c ,startdate from Contract where id = :updateContractId];
 							
 							if (ContractType == 'EVAL') 
 									{
@@ -895,12 +904,17 @@ String promoDiscount = '';
 											updateContact.Patent_companion_trial_start__c = date.today();
 											updateContact.Patent_Companion_trial_end__c = subscriptionExpirationDateAsDate;
 											updateContact.patent_companion__c = true;
+											updateContract.patent_companion_users__c = userCountInt;
 											}
 											If (product=='EagleEye'){
 												updateContact.EagleEye__c = true;
-											}
-											if (promocode != '') updateContract.promotion_code__c = promocode;
-											if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
+												updateContact.Agreement_Checker_Trial_Start__c = date.today();
+												updateContact.Agreement_Checker_Trial_End__c = subscriptionExpirationDateAsDate;
+												updateContact.Agreement_Checker_Trial_Initiated__c = true;
+												updateContract.EagleEye_users__c = userCountInt;
+												}
+											
+											
 											
 											update updateContact;
 									}
@@ -913,9 +927,18 @@ String promoDiscount = '';
 											updateContract.EndDate = subscriptionExpirationDateAsDate;
 											updateContract.Activation_End_Date_WF__c = subscriptionExpirationDateAsDate;
 											if (promocode != '') updateContract.promotion_code__c = promocode;
+											if (promocode != '') updateContract.promotion_applied__C = true;
 											if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
 											
+											If (product=='EagleEye'){
+												updateContract.EagleEye_users__c = userCountInt;
+												}
 											
+											If (product=='Patent Companion'){
+												updateContract.patent_companion_users__c = userCountInt;
+												}
+
+
 											if (MSSecureContactID != '')
 												    {
 		    
@@ -963,13 +986,27 @@ String promoDiscount = '';
 											//updateContract.online_subscription_revenue_to_date__c = origBillingAmount + billingAmountInt;
 											updateContract.Contract_Type__c = 'Renewal';
 											if (promocode != '') updateContract.promotion_code__c = promocode;
+											if (promocode != '') updateContract.promotion_applied__C = true;
 											if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
+											
+											If (product=='EagleEye'){
+												updateContract.EagleEye_users__c = userCountInt;
+												}
+											
+											If (product=='Patent Companion'){
+												updateContract.patent_companion_users__c = userCountInt;
+												}
+											
+											
 									}
 							else if (ContractType == 'GROUP')
 									{
 											updateContract.Name = accountNameFromID + ' - ' + date.today().year() + '/' + date.today().month() + '/' + date.today().day() +  ' ' + product;
 											updateContract.Description = product + ' ' + contractLengthForDescription + ' ' + period + ' contract for ' + accountNameFromID;
 											updateContract.Contract_Type__c = 'Agreement (Initial)';
+											if (promocode != '') updateContract.promotion_code__c = promocode;
+											if (promocode != '') updateContract.promotion_applied__C = true;
+											if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
 											system.debug('what kind of contract is this/' + product);
 											
 											if (product == 'Patent Companion'){
@@ -995,22 +1032,17 @@ String promoDiscount = '';
 							updateContract.Contract_Term_Length_Yrs__c = Decimal.valueOf(contractLengthYears);
 							updateContract.ContractTerm = Integer.valueOf(contractLengthMonths);
 							updateContract.Contract_Sub_Type__c = 'Subscription';
-							system.debug('billingamountint=');
-							system.debug(billingAmountInt);
-							system.debug('origBillingAmount=');
-							system.debug(origBillingAmount);
+							
 							updateContract.online_subscription_revenue_to_date__c = billingAmountInt + origBillingAmount;
 							updateContract.online_subscription_revenue_current_term__c = billingAmountInt;
 							
-									if (year1billingInt == 0 && billingAmountInt > 0 && product == 'Patent Companion')
-										{
-										updateContract.year_1_billing_amount_patent_companion__c = billingAmountInt;
-										}
-										
-										
-										
 								update updateContract;
+
+								//Now, update the revenue for the contract.		
+								system.debug('calling updatecontractrevenueamount');						
+								updateContractRevenueAmounts(updatecontract.Id,  billingAmountInt);
 						
+						//now get the record type so we can create the contract products
 							RecordType rt = [select Id from RecordType where Name = 'User Licenses' and SobjectType = 'Contract_Product__c' limit 1];
 							
 							system.debug('I am going to delete all contract products');
@@ -1112,6 +1144,81 @@ String promoDiscount = '';
 			}
 			
 			
+			public static void updateContractRevenueAmounts(String contractId, Decimal billingAmountInt)
+			{
+				
+				contract updateContract = [select ID, product__c, MSSubscriptionID__c, online_subscription_revenue_to_date__c,year_1_billing_amount_patent_Companion__c, year_2_billing_amount_patent_Companion__c,year_3_billing_amount_patent_Companion__c,year_4_billing_amount_patent_Companion__c ,Year_1_Billing_Amount_EagleEye__c,Year_2_Billing_Amount_EagleEye__c,Year_3_Billing_Amount_EagleEye__c,Year_4_Billing_Amount_EagleEye__c,startdate from Contract where id = :contractId];
+				
+				
+				
+				string howFarIntoContract = String.valueof((updateContract.startdate.monthsBetween(date.today())));
+		    				//String product = updatecontract.product__c;
+		    				if (updatecontract.product__c == 'Patent Companion'){	
+		    					decimal origYear1Billing = updateContract.year_1_billing_amount_patent_companion__c;
+		    					if (origYear1Billing == null) origYear1Billing = 0;
+		    					
+		    					decimal origYear2Billing = updateContract.year_2_billing_amount_patent_companion__c;
+		    					if (origYear2Billing == null) origYear2Billing = 0;
+		    				
+		    					decimal origYear3Billing = updateContract.year_3_billing_amount_patent_companion__c;
+		    					if (origYear3Billing == null) origYear3Billing = 0;
+		    				
+		    					decimal origYear4Billing = updateContract.year_1_billing_amount_patent_companion__c;
+		    					if (origYear4Billing == null) origYear4Billing = 0;
+		    				
+		    				
+		    				system.debug('howfarintocontract=' + howFarIntoContract);	
+		    				system.debug('year1=' + updateContract.year_1_billing_amount_patent_companion__c);
+		    						if (Integer.valueof(howFarIntoContract) <= 12 ){
+		    							updateContract.year_1_billing_amount_patent_Companion__c = billingAmountInt + origYear1Billing;
+		    						} else if (Integer.valueof(howFarIntoContract) > 12 && Integer.valueof(howFarIntoContract) <=24) {
+		    							updateContract.year_2_billing_amount_patent_Companion__c = billingAmountInt + origYear2Billing;
+		    						} else if (Integer.valueof(howFarIntoContract) > 24 && Integer.valueof(howFarIntoContract) <=36) {
+		    							updateContract.year_3_billing_amount_patent_Companion__c = billingAmountInt + origYear3Billing;
+		    						} else if (Integer.valueof(howFarIntoContract) > 36 && Integer.valueof(howFarIntoContract) <=48) {
+		    							updateContract.year_4_billing_amount_patent_Companion__c = billingAmountInt + origYear4Billing;
+		    						}
+		
+		//end PC if
+				    				}				 	
+		    		
+		    		
+		    					if (updatecontract.product__c == 'EagleEye'){	
+		    					decimal origYear1Billing = updateContract.year_1_billing_amount_EagleEye__c;
+		    					if (origYear1Billing == null) origYear1Billing = 0;
+		    					
+		    					decimal origYear2Billing = updateContract.year_2_billing_amount_EagleEye__c;
+		    					if (origYear2Billing == null) origYear2Billing = 0;
+		    				
+		    					decimal origYear3Billing = updateContract.year_3_billing_amount_EagleEye__c;
+		    					if (origYear3Billing == null) origYear3Billing = 0;
+		    				
+		    					decimal origYear4Billing = updateContract.year_4_billing_amount_EagleEye__c;
+		    					if (origYear4Billing == null) origYear4Billing = 0;
+		    				
+		    				system.debug(updatecontract.id);
+		    				system.debug('howfarintocontract=' + howFarIntoContract);	
+		    				system.debug('year1=' + updateContract.year_1_billing_amount_EagleEye__c);
+		    						if (Integer.valueof(howFarIntoContract) <= 12 ){
+		    							updateContract.year_1_billing_amount_EagleEye__c = billingAmountInt + origYear1Billing;
+		    						} else if (Integer.valueof(howFarIntoContract) > 12 && Integer.valueof(howFarIntoContract) <=24) {
+		    							updateContract.year_2_billing_amount_EagleEye__c = billingAmountInt + origYear2Billing;
+		    						} else if (Integer.valueof(howFarIntoContract) > 24 && Integer.valueof(howFarIntoContract) <=36) {
+		    							updateContract.year_2_billing_amount_EagleEye__c = billingAmountInt + origYear3Billing;
+		    						} else if (Integer.valueof(howFarIntoContract) > 36 && Integer.valueof(howFarIntoContract) <=48) {
+		    							updateContract.year_3_billing_amount_EagleEye__c = billingAmountInt + origYear4Billing;
+		    						}
+		
+		//end EE if
+				    				}
+		    		
+		    		update updateContract;
+		    		
+		    				
+		    				
+			}		   
+			
+			
 			public static void changeContractUserCount(String MSSubscriptionID, String userCount) 
 			{
 			
@@ -1121,7 +1228,7 @@ String promoDiscount = '';
 			system.debug('in the change contract user count function');
 			
   				
-  				Contract [] contractArray = [Select id from Contract where MSSubscriptionID__c = :MSSubscriptionID];
+  				Contract [] contractArray = [Select id, product__c, description from Contract where MSSubscriptionID__c = :MSSubscriptionID];
   						
   						if (contractArray.size() > 0)
   						
@@ -1130,9 +1237,10 @@ String promoDiscount = '';
 		  						system.debug('found a contract array - now need to update user count.');
 		  						for(Integer a = 0; a < contractArray.size(); a++)
 			  						{
-			  						system.debug('set status to dropped for contract contract #' + contractArray[a].id);
-			  						contractArray[a].status = 'DROPPED';
-			  						contractArray[a].Description = 'Contract dropped via customer request via Secure portal';
+			  						system.debug('changed user count for ' + contractArray[a].id);
+			  						if (contractArray[a].product__c == 'Patent Companion') contractArray[a].Patent_Companion_Users__c = decimal.valueOf(userCount); 
+			  						if (contractArray[a].product__c == 'EagleEye') contractArray[a].EagleEye_Users__c = decimal.valueOf(userCount); 
+			  						contractArray[a].Description = String.valueof(date.today()) + 'User count updated via secure portal' + '\r\n' + contractArray[a].Description;
 			  						update contractArray[a];
 									}
   						}	
@@ -1178,7 +1286,19 @@ String promoDiscount = '';
 						handleErrorAndSendEmail('Error cancelling contract  ' + MSSubscriptionID,e.getmessage());	
 					}
 			}
-					    
+				
+			public Decimal decimalZeroIfNull(Decimal num )
+				{
+			if (num == null) num = 0;
+			return num;
+				}
+				
+			public Integer integerZeroIfNull(Integer num )
+				{
+			if (num == null) num = 0;
+			return num;
+				}
+						    
 		    public static void addDownloadRecord(String downloadFileName, String downloadDateTime, String userEmail, String MSSecureContactID,String emailDomain, String domainBody, String leadSource)
 		    {
 		    String DLContactID = '';
