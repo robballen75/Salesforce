@@ -37,16 +37,33 @@ String downloadFileName = '';
 String downloadDateTime = '';
 String productFeatures = '';
 String promoDiscount = '';
+String referralCode = '';
+String packageName = '';
 
 	//Try to parse the email for all the data parts we need
 			
+			
+			try
+	  		{
+	  		packageName = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<packageName>')+13,email.plainTextBody.indexOfIgnoreCase('</packageName>')).trim();
+	  		system.debug('packageName=' + packageName);
+	  		}
+	  		catch (exception e)
+	  		{system.debug('exception parsing packageName');}
 			try
 	  		{
 	  		promoDiscount = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<promoDiscount>')+15,email.plainTextBody.indexOfIgnoreCase('</promoDiscount>')).trim();
 	  		system.debug('promoDiscount=' + promoDiscount);
 	  		}
 	  		catch (exception e)
-	  		{system.debug('exception parsing downloadFileName');}
+	  		{system.debug('exception parsing promoDiscount');}
+	  		try
+	  		{
+	  		referralCode = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<referralCode>')+14,email.plainTextBody.indexOfIgnoreCase('</referralCode>')).trim();
+	  		system.debug('referralCode=' + referralCode);
+	  		}
+	  		catch (exception e)
+	  		{system.debug('exception parsing referralCode');}
 			try
 	  		{
 	  		downloadFileName = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<downloadFileName>')+18,email.plainTextBody.indexOfIgnoreCase('</downloadFileName>')).trim();
@@ -60,7 +77,7 @@ String promoDiscount = '';
 	  		system.debug('productFeatures=' + productFeatures);
 	  		}
 	  		catch (exception e)
-	  		{system.debug('exception parsing downloadFileName');}
+	  		{system.debug('exception parsing productFeatures');}
 	  		try
 	  		{
 	  		downloadDateTime = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<downloadDateTime>')+18,email.plainTextBody.indexOfIgnoreCase('</downloadDateTime>')).trim();
@@ -107,7 +124,7 @@ String promoDiscount = '';
 	  		system.debug('promoCode=' + promoCode);
 	  		}
 	  		catch (exception e)
-	  		{system.debug('exception parsing userEmail');}
+	  		{system.debug('exception parsing promoCode');}
 	  		try
 	  		{
 	  		userPhone = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<userPhone>')+11,email.plainTextBody.indexOfIgnoreCase('</userPhone>')).trim();
@@ -267,10 +284,18 @@ String promoDiscount = '';
 				return result;
  		}
  		
- 	//Check to see if action is "UPDATEUSERCOUNT" - if so, just update the number of users on an existing contract
+ //Check to see if action is "UPDATEUSERCOUNT" - if so, just update the number of users on an existing contract
  		if (action == 'UPDATEUSERCOUNT')
 		{
-				changeContractUserCount(MSSecureContactID, userCount);
+				changeContractUserCount(MSSubscriptionID, userCount);
+				result.success = true;
+				return result;		
+		}  
+ 		
+ 		
+ 		if (action == 'UPDATEENDDATE')
+		{
+				changeContractEndDate(MSSubscriptionID, subscriptionExpirationDate);
 				result.success = true;
 				return result;		
 		}  
@@ -304,7 +329,7 @@ String promoDiscount = '';
 		}
 		
 		
-		//Check to see if the action is "CREATECONTRACT" and the  contractType is "GROUP" - if so, call associate funciton and exit.
+		//Check to see if the action is "Associate" and the  contractType is "GROUP" - if so, call associate funciton and exit.
 		if (action=='ASSOCIATE' && contractType == 'GROUP')
 		{
 			connectUserToFirmContract(MSSubscriptionID,MSSecureContactID);
@@ -318,7 +343,7 @@ String promoDiscount = '';
  system.debug('checking to see if we should create a contract - type=' + contractType);
  		if (action == 'CREATECONTRACT' && (contractType == 'EVAL' || contractType =='INDIVIDUAL' || contractType =='RENEW'))
  		{
-			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount);
+			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount,referralCode,packageName);
 			result.success = true;
 			return result;
  		}
@@ -327,7 +352,7 @@ String promoDiscount = '';
  //Check to see if the action is "CREATEGROUPCONTRACT" - if so, create firm contract
  			if (action == 'CREATEGROUPCONTRACT')
  			{
- 			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount);
+ 			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount,referralCode,packageName);
  			result.success = true;
 			return result;
  			}
@@ -396,23 +421,23 @@ String promoDiscount = '';
 						updateContact[0].email = emailAddress;	
 						}
 						if (firstName != '')
-						system.debug('firstName is not null');
 						{
+						system.debug('firstName is not null');
 						updateContact[0].FirstName = firstName;	
 						}
 						if (lastName != '')
-						system.debug('lastName is not null');
 						{
+						system.debug('lastName is not null');
 						updateContact[0].LastName = lastName;	
 						}
 						if (emailOptOut == 'True')
-						system.debug('emailOptOut is not null');
 						{
-							updateContact[0].HasOptedOutOfEmail = True;
+						updateContact[0].HasOptedOutOfEmail = True;
+						system.debug('emailOptOut is not null');
 						}
 						if (userPhone != '')
-						system.debug('userPhone is not null');
 						{
+						system.debug('userPhone is not null');
 						updatecontact[0].Phone = userPhone;
 						}
 					system.debug('getting ready to call the update on the updateContact object');
@@ -491,15 +516,16 @@ String promoDiscount = '';
 										
 										
 										//Get user details, so we can email the lead owner and their manager
-												user [] leadOwnerUser = [select name, email, manager.email from user where id = :leadOwner];
-													if (leadOwnerUser.size() > 0)
-														{
-															leadOwner = leadOwnerUser[0].name;
-															leadOwnerEmail = leadOwnerUser[0].email;
-															contactAndLeadBothExistTORecipients.add(leadOwnerEmail);
-															contactAndLeadBothExistCCRecipients.add(leadOwnerUser[0].manager.email);
-															
-														}
+										
+												//user [] leadOwnerUser = [select name, email from user where id = :leadOwner];
+												//	if (leadOwnerUser.size() > 0)
+												//		{
+												//			leadOwner = leadOwnerUser[0].name;
+												//			leadOwnerEmail = leadOwnerUser[0].email;
+												//			contactAndLeadBothExistTORecipients.add(leadOwnerEmail);
+												//			contactAndLeadBothExistCCRecipients.add(leadOwnerUser[0].manager.email);
+												//			
+												//		}
 											
 										//Check to see if there is an existing contact with this email address.
 										//If there is the lead can't convert, because it will fail a duplicate constraint
@@ -510,6 +536,8 @@ String promoDiscount = '';
 													
 													if (leadContactCheck.size() > 0)
 													{
+															contactAndLeadBothExistTORecipients.add('support@microsystems.com');
+															contactAndLeadBothExistCCRecipients.add('support@microsystems.com');
 														sendNotificationEmail(contactAndLeadBothExistMessage,contactAndLeadBothExistTORecipients,contactAndLeadBothExistCCRecipients);
 													} else
 													
@@ -549,7 +577,7 @@ String promoDiscount = '';
     				if (accountID == '')
     				{
     				
-    					Contact [] accountArray = [Select accountId From contact Where Email like :emailDomain  Limit 1];
+    					Contact [] accountArray = [Select accountId From contact Where Email like :emailDomain and account.name != 'Employment Unknown' Limit 1];
 
 								
 							
@@ -569,9 +597,9 @@ String promoDiscount = '';
 					               		insert acct;
 					               		accountId = acct.id;
 									} else if (domainInBlackList != -1)
-									system.debug('domain was in blacklist');
+									
 									{
-										
+										system.debug('domain was in blacklist');
 										try
 										{
 											account employmentUnknownAccount = [select id from account where name = 'Employment Unknown'];
@@ -674,7 +702,7 @@ String promoDiscount = '';
     			
 		    }
 		    
-	public static void createContract(String ContractType,String MSSecureContactID, String SFAccountID, String MSSubscriptionID, String product,  String billingAmount, String subscriptionExpirationDate, String userCount,String promoCode,String year1billing,String year2billing,String year3billing,String year4billing, String productFeatures, String promoDiscount)
+	public static void createContract(String ContractType,String MSSecureContactID, String SFAccountID, String MSSubscriptionID, String product,  String billingAmount, String subscriptionExpirationDate, String userCount,String promoCode,String year1billing,String year2billing,String year3billing,String year4billing, String productFeatures, String promoDiscount, String referralCode, String packageName)
 		    {
 		    	String accountId = '';
 		    	String contactId = '';
@@ -926,9 +954,9 @@ String promoDiscount = '';
 											updateContract.Name = firstName + ' ' + lastName + ' - ' + date.today().year() + '/' + date.today().month() + '/' + date.today().day() + ' ' +  product;
 											updateContract.EndDate = subscriptionExpirationDateAsDate;
 											updateContract.Activation_End_Date_WF__c = subscriptionExpirationDateAsDate;
-											if (promocode != '') updateContract.promotion_code__c = promocode;
-											if (promocode != '') updateContract.promotion_applied__C = true;
-											if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
+											//if (promocode != '') updateContract.promotion_code__c = promocode;
+											//if (promocode != '') updateContract.promotion_applied__C = true;
+											//if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
 											
 											If (product=='EagleEye'){
 												updateContract.EagleEye_users__c = userCountInt;
@@ -985,9 +1013,9 @@ String promoDiscount = '';
 											updateContract.Description = product + ' ' + contractLengthForDescription + ' '  + period + ' renewal for ' + firstName + ' ' + lastName;
 											//updateContract.online_subscription_revenue_to_date__c = origBillingAmount + billingAmountInt;
 											updateContract.Contract_Type__c = 'Renewal';
-											if (promocode != '') updateContract.promotion_code__c = promocode;
-											if (promocode != '') updateContract.promotion_applied__C = true;
-											if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
+											//if (promocode != '') updateContract.promotion_code__c = promocode;
+											//if (promocode != '') updateContract.promotion_applied__C = true;
+											//if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
 											
 											If (product=='EagleEye'){
 												updateContract.EagleEye_users__c = userCountInt;
@@ -1004,9 +1032,9 @@ String promoDiscount = '';
 											updateContract.Name = accountNameFromID + ' - ' + date.today().year() + '/' + date.today().month() + '/' + date.today().day() +  ' ' + product;
 											updateContract.Description = product + ' ' + contractLengthForDescription + ' ' + period + ' contract for ' + accountNameFromID;
 											updateContract.Contract_Type__c = 'Agreement (Initial)';
-											if (promocode != '') updateContract.promotion_code__c = promocode;
-											if (promocode != '') updateContract.promotion_applied__C = true;
-											if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
+											//if (promocode != '') updateContract.promotion_code__c = promocode;
+											//if (promocode != '') updateContract.promotion_applied__C = true;
+											//if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
 											system.debug('what kind of contract is this/' + product);
 											
 											if (product == 'Patent Companion'){
@@ -1029,6 +1057,12 @@ String promoDiscount = '';
 											
 									}
 							
+							if (promocode != '') updateContract.promotion_code__c = promocode;
+							if (promocode != '') updateContract.promotion_applied__C = true;
+							if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
+							if (referralCode != '') updateContract.referral_code__c = referralCode;
+							if (packageName != '') updateContract.Software_Feature_Package_Name__c = packageName;
+							
 							updateContract.Contract_Term_Length_Yrs__c = Decimal.valueOf(contractLengthYears);
 							updateContract.ContractTerm = Integer.valueOf(contractLengthMonths);
 							updateContract.Contract_Sub_Type__c = 'Subscription';
@@ -1041,7 +1075,7 @@ String promoDiscount = '';
 								//Now, update the revenue for the contract.		
 								system.debug('calling updatecontractrevenueamount');						
 								updateContractRevenueAmounts(updatecontract.Id,  billingAmountInt);
-						
+								updateContractStartEndDates(updatecontract.id, date.today());
 						//now get the record type so we can create the contract products
 							RecordType rt = [select Id from RecordType where Name = 'User Licenses' and SobjectType = 'Contract_Product__c' limit 1];
 							
@@ -1143,6 +1177,39 @@ String promoDiscount = '';
 			
 			}
 			
+		
+			public static void updateContractStartEndDates(String contractId, Date startDate)
+			{
+				
+				contract newContract = [select ID, Contract_Term_Length_Yrs__c, product__c, MSSubscriptionID__c,  year_1_start_date__c, year_1_end_date__c,year_2_start_date__c, year_2_end_date__c, year_3_start_date__c, year_3_end_date__c, year_4_start_date__c ,year_4_end_date__c from Contract where id = :contractId];
+				
+			
+					Date startDateForCalculations = startDate ;
+            		integer term = newContract.Contract_Term_Length_Yrs__c.intValue();
+            		newContract.year_1_start_date__c = startDateForCalculations;
+            		newContract.year_1_end_date__c =  startDateForCalculations.AddYears(1).AddDays(-1);
+            		
+            		if (term > 1 ){
+					newContract.year_2_start_date__c = startDateForCalculations.AddYears(1);
+					newContract.year_2_end_date__c =  startDateForCalculations.AddYears(2).AddDays(-1);
+            		}
+            		if (term > 2)  {
+					newContract.year_3_start_date__c = startDateForCalculations.AddYears(2);
+					newContract.year_3_end_date__c =  startDateForCalculations.AddYears(3).AddDays(-1);
+            		}
+					  	if (term > 3)
+					  {
+					newContract.year_4_start_date__c = startDateForCalculations.AddYears(3);
+					newContract.year_4_end_date__c =  startDateForCalculations.AddYears(4).AddDays(-1);           	
+					  }   
+			
+				    		
+		    		update newContract;
+		    		
+		    				
+		    				
+			}		   
+		
 			
 			public static void updateContractRevenueAmounts(String contractId, Decimal billingAmountInt)
 			{
@@ -1179,7 +1246,7 @@ String promoDiscount = '';
 		    							updateContract.year_4_billing_amount_patent_Companion__c = billingAmountInt + origYear4Billing;
 		    						}
 		
-		//end PC if
+									//end PC if
 				    				}				 	
 		    		
 		    		
@@ -1238,6 +1305,7 @@ String promoDiscount = '';
 		  						for(Integer a = 0; a < contractArray.size(); a++)
 			  						{
 			  						system.debug('changed user count for ' + contractArray[a].id);
+			  						system.debug(contractArray[a].product__c);
 			  						if (contractArray[a].product__c == 'Patent Companion') contractArray[a].Patent_Companion_Users__c = decimal.valueOf(userCount); 
 			  						if (contractArray[a].product__c == 'EagleEye') contractArray[a].EagleEye_Users__c = decimal.valueOf(userCount); 
 			  						contractArray[a].Description = String.valueof(date.today()) + 'User count updated via secure portal' + '\r\n' + contractArray[a].Description;
@@ -1249,7 +1317,41 @@ String promoDiscount = '';
 			}
 			catch (exception e)
 					{
-						handleErrorAndSendEmail('Error cancelling contract  ' + MSSubscriptionID,e.getmessage());	
+						handleErrorAndSendEmail('Error changing user count contract  ' + MSSubscriptionID,e.getmessage());	
+					}
+			}
+			
+			public static void changeContractEndDate(String MSSubscriptionID, String subscriptionExpirationDate) 
+			{
+			
+			try
+			{
+				
+			system.debug('in the change contract end date function');
+			
+  				Contract [] contractArray = [Select id, startDate, description, endDate from Contract where MSSubscriptionID__c = :MSSubscriptionID];
+  						
+  						if (contractArray.size() > 0)
+  						
+  						{
+  							
+		  						system.debug('found a contract array - now need to update end date.');
+		  						for(Integer a = 0; a < contractArray.size(); a++)
+			  						{
+			  						system.debug('changing end date for ' + contractArray[a].id);
+			  						system.debug(Date.parse(subscriptionExpirationDate));
+			  						system.debug(contractArray[a].startdate);
+			  						contractArray[a].enddate = Date.parse(subscriptionExpirationDate);
+			  						contractArray[a].Description = String.valueof(date.today()) + 'Contract End Date changed by Secure Portal user' + '\r\n' + contractArray[a].Description;
+			  						update contractArray[a];
+									}
+  						}	
+  				
+  						
+			}
+			catch (exception e)
+					{
+						handleErrorAndSendEmail('Error changing end date' + MSSubscriptionID,e.getmessage());	
 					}
 			}
 			
