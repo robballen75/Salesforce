@@ -39,9 +39,16 @@ String productFeatures = '';
 String promoDiscount = '';
 String referralCode = '';
 String packageName = '';
+String transactionID = '';
 
 	//Try to parse the email for all the data parts we need
-			
+			try
+	  		{
+	  		transactionID = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<transactionID>')+15,email.plainTextBody.indexOfIgnoreCase('</transactionID>')).trim();
+	  		system.debug('transactionID=' + transactionID);
+	  		}
+	  		catch (exception e)
+	  		{system.debug('exception parsing packageName');}
 			
 			try
 	  		{
@@ -343,7 +350,7 @@ String packageName = '';
  system.debug('checking to see if we should create a contract - type=' + contractType);
  		if (action == 'CREATECONTRACT' && (contractType == 'EVAL' || contractType =='INDIVIDUAL' || contractType =='RENEW'))
  		{
-			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount,referralCode,packageName);
+			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount,referralCode,packageName,transactionID);
 			result.success = true;
 			return result;
  		}
@@ -352,7 +359,7 @@ String packageName = '';
  //Check to see if the action is "CREATEGROUPCONTRACT" - if so, create firm contract
  			if (action == 'CREATEGROUPCONTRACT')
  			{
- 			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount,referralCode,packageName);
+ 			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount,referralCode,packageName,transactionID);
  			result.success = true;
 			return result;
  			}
@@ -702,7 +709,7 @@ String packageName = '';
     			
 		    }
 		    
-	public static void createContract(String ContractType,String MSSecureContactID, String SFAccountID, String MSSubscriptionID, String product,  String billingAmount, String subscriptionExpirationDate, String userCount,String promoCode,String year1billing,String year2billing,String year3billing,String year4billing, String productFeatures, String promoDiscount, String referralCode, String packageName)
+	public static void createContract(String ContractType,String MSSecureContactID, String SFAccountID, String MSSubscriptionID, String product,  String billingAmount, String subscriptionExpirationDate, String userCount,String promoCode,String year1billing,String year2billing,String year3billing,String year4billing, String productFeatures, String promoDiscount, String referralCode, String packageName, String transactionId)
 		    {
 		    	String accountId = '';
 		    	String contactId = '';
@@ -985,6 +992,10 @@ String packageName = '';
 														catch (exception e){
 																			}
 														}
+														
+														
+										//Create the opportunity for this contract
+										createOpportunityForContract(MSSubscriptionId, product);
 										//ADDING CODE TO FIND THE ORIGINAL EVAL CONTRACT.  IF IT EXISTS, SET THE ORIGINAL CONTRACT FIELD ON THE NEW CONTRACT
 										//TEMPORARY - PC WILL BE CHANGED TO USE THE SAME SUBSCRIPTION ID FOR EVAL AND REAL CONTRACTS
 										//WHEN THAT HAPPENS, DELETE OR COMMENT OUT THIS CODE
@@ -1069,6 +1080,7 @@ String packageName = '';
 							
 							updateContract.online_subscription_revenue_to_date__c = billingAmountInt + origBillingAmount;
 							updateContract.online_subscription_revenue_current_term__c = billingAmountInt;
+							updateContract.Online_Subscription_Transaction_ID__c = transactionId;
 							
 								update updateContract;
 
@@ -1210,6 +1222,8 @@ String packageName = '';
 		    				
 			}		   
 		
+		
+		
 			
 			public static void updateContractRevenueAmounts(String contractId, Decimal billingAmountInt)
 			{
@@ -1284,6 +1298,115 @@ String packageName = '';
 		    				
 		    				
 			}		   
+			
+			
+		public static void createOpportunityForContract(String MSSubscriptionID, String Product) 
+			{
+			
+			try
+			{
+				
+			system.debug('in the create opportunity for contract function');
+			 	String products = '';
+  				
+  				Contract [] contractArray = [select account.name, ID,Currency_Type__c, AccountId, name, Year1_Billing_Amount_Total__c, Year2_Billing_Amount_Total__c,Year3_Billing_Amount_Total__c,Year4_Billing_Amount_Total__c,Year_4_Billng_Amount_Services__c,Year_3_Billing_Amount_Services__c,Year_2_Billing_Amount_Services__c,Year_1_Billing_Amount_Services__c,Contract_Term_Length_Yrs__c,startdate,enddate,account.industry, account.Client_Relations_Account_Owner__c,account.ownerid,Year_1_Maintenance_Amount_3BClean__c,Year_1_Maintenance_Amount_DocXtools__c,Year_1_Maintenance_Amount_EagleEye__c,Contract_Sub_Type__c,Year_1_License_Amount_3BClean__c,Year_1_License_Amount_DocXtools__c,Year_1_License_Amount_EagleEye__c,Year_1_Year_4_Total_Billing__c FROM Contract where MSSubscriptionID__c = :MSSubscriptionID];
+  						
+  						if (contractArray.size() > 0)
+  						
+  						{
+  							
+		  						system.debug('found a contract array - now need to create opportunity.');
+		  						for(Integer a = 0; a < contractArray.size(); a++)
+			  						{
+			  						
+			  						
+			  						
+			  				for (contract_product__c cp : [select product__c, contract__r.account.industry, contract__r.account.BillingCountry from contract_product__c where contract__r.id =:contractArray[a].Id and product__c != 'Services' ])
+							{	
+								if (products == '')
+								{
+									products = cp.product__c;
+								}
+								else if (products != '')
+								{
+									products = products + ',' + cp.product__c;
+								
+								}
+			
+							}
+			  						
+			  				//Create opportunity
+			  				Decimal totalValue = 0;
+							Decimal totalServices = 0;
+							Decimal totalPerpSupport = 0;
+	
+			
+			//if (contractArray[a].Contract_Term_Length_Yrs__c == 1)  totalValue = cont.Year1_Billing_Amount_Total__c;
+			//if (contractArray[a].Contract_Term_Length_Yrs__c == 2)  totalValue = cont.Year2_Billing_Amount_Total__c;
+			//if (contractArray[a].Contract_Term_Length_Yrs__c == 3)  totalValue = cont.Year3_Billing_Amount_Total__c;
+			//if (contractArray[a].Contract_Term_Length_Yrs__c == 4)  totalValue = cont.Year4_Billing_Amount_Total__c;
+			//if (contractArray[a].Contract_Term_Length_Yrs__c == 1)  totalServices = cont.Year_1_Billing_Amount_Services__c;
+			//if (contractArray[a].Contract_Term_Length_Yrs__c == 2)  totalServices = cont.Year_2_Billing_Amount_Services__c;  
+			//if (contractArray[a].Contract_Term_Length_Yrs__c == 3)  totalServices = cont.Year_3_Billing_Amount_Services__c;
+			//if (contractArray[a].Contract_Term_Length_Yrs__c == 4)  totalServices = cont.Year_4_Billng_Amount_Services__c;
+			totalValue = contractArray[a].Year_1_Year_4_Total_Billing__c;
+			if (totalValue == null) totalValue = 0;
+			if (totalServices == null) totalServices =0;
+			system.debug(totalValue);
+			system.debug(totalServices);
+			Decimal totalNewTermValue = totalValue - totalServices;
+			system.debug(totalNewTermValue);
+			
+			User[]  u = [select id from user where id = :contractArray[a].account.Client_Relations_Account_Owner__c];
+			string ownerSFId = '';
+			if (u.size() > 0) {
+				ownerSFId=u[0].id;
+			}
+			else 
+			{
+				//User[]  u2 = [select id from user where id = :contractArray[a].account.ownerid];
+				//if (u2.size() > 0) ownerSFId = u2[0].id; 
+				ownerSFId = contractArray[a].account.Ownerid;
+			}
+			system.debug('enddate');
+			system.debug(contractArray[a].enddate);
+			system.debug(ownerSFId);
+			
+			
+			
+						
+            //Create the opportunity
+            Opportunity o = new Opportunity (
+            AccountID = contractArray[a].AccountId
+            ,name=contractArray[a].account.name + ' - ' + products 
+            ,Opportunity_Start_Date__c = contractArray[a].enddate +1
+            ,Product__c = product
+            ,Related_Renewal_Contract__c = contractArray[a].id
+            ,CloseDate = contractArray[a].enddate + 1
+            ,StageName = '8-Closed Won'
+            ,ownerID = ownerSFId
+            ,amount = totalNewTermValue
+            ,Software_Amount__c = totalNewTermValue
+            ,Support_Amount__c = totalPerpSupport
+            ,Existing_Customer__c = True
+            
+            );
+            insert o;
+            	
+			  			
+			  			
+			  					}
+  						}	
+  				
+  						
+			}
+			catch (exception e)
+					{
+						handleErrorAndSendEmail('Error changing user count contract  ' + MSSubscriptionID,e.getmessage());	
+					}
+			}
+			
+			
 			
 			
 			public static void changeContractUserCount(String MSSubscriptionID, String userCount) 
