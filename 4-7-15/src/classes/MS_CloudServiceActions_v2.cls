@@ -9,6 +9,7 @@ global class MS_CloudServiceActions_v2 implements Messaging.InboundEmailHandler 
         Messaging.InboundEmailResult result = new Messaging.InboundEmailresult();
 
        // Set up working variables 
+Boolean didItWork = false;
 String firstName = '';
 String lastName = '';
 String action = '';
@@ -258,8 +259,8 @@ String transactionID = '';
 		
 		if (action == 'ADDDOWNLOADRECORD')
 		{
-			addDownloadRecord(downloadFileName, downloadDateTime, userEmail, MSSecureContactID, emailDomain,  domainBody,  leadSource);
-			result.success = true;
+			didItWork = addDownloadRecord(downloadFileName, downloadDateTime, userEmail, MSSecureContactID, emailDomain,  domainBody,  leadSource);
+			result.success = didItWork;
 			return result;
 		}
 		
@@ -267,53 +268,42 @@ String transactionID = '';
  //Check to see if the action is "CANCEL" - if so, call cancel function.
  		if (action == 'CANCEL')
  		{
- 		cancelContracts(MSSubscriptionID);
- 		result.success = true;
- 		return result;
+     	didItWork = cancelContracts(MSSubscriptionID);
+ 		result.success = didItWork;
+		return result;
  		}
  		
  //Check to see if the action is "UPDATEFEATURES" - if so, remove all contract products and add new valid ones.
  		if (action == 'UPDATEFEATURES')
  		{
- 			RecordType rt = [select Id from RecordType where Name = 'User Licenses' and SobjectType = 'Contract_Product__c' limit 1];
-			String[] productFeaturesArray = productFeatures.split('--',0); 			
- 			Contract checkContract = [Select ID from Contract where MSSubscriptionID__c = :MSSubscriptionID];
- 			deleteContractProducts(checkContract.id);
-			createContractProduct(checkContract.id, product, rt.id);	
-				for (Integer i = 0; i < productFeaturesArray.size(); i++)
-					 {  
-								
-    				createContractProduct (checkContract.id, productFeaturesArray[i], rt.id);	
-    												
-					 }
-
- 			result.success = true;
-				return result;
+ 			didItWork = updateContractFeatures(productFeatures, MSSubscriptionID, product);
+ 			result.success = didItWork;
+			return result;
  		}
  		
  //Check to see if action is "UPDATEUSERCOUNT" - if so, just update the number of users on an existing contract
  		if (action == 'UPDATEUSERCOUNT')
 		{
-				changeContractUserCount(MSSubscriptionID, userCount);
-				result.success = true;
-				return result;		
+			didItWork = changeContractUserCount(MSSubscriptionID, userCount);
+			result.success = didItWork;
+			return result;
 		}  
  		
  		
  		if (action == 'UPDATEENDDATE')
 		{
-				changeContractEndDate(MSSubscriptionID, subscriptionExpirationDate);
-				result.success = true;
-				return result;		
+			didItWork = changeContractEndDate(MSSubscriptionID, subscriptionExpirationDate);
+			result.success = didItWork;
+			return result;
 		}  
  		
     
  //Check to see if the action is "UPDATECONTACT" - if so, call update function.
 		if (action == 'UPDATECONTACT')
 		{
-				changeContactDetails(MSSecureContactID, firstName,lastName, userEmail, accountName, emailOptOut, userPhone);
-				result.success = true;
-				return result;		
+			didItWork = changeContactDetails(MSSecureContactID, firstName,lastName, userEmail, accountName, emailOptOut, userPhone);
+			result.success = didItWork;
+			return result;
 		}   
     
     
@@ -321,17 +311,17 @@ String transactionID = '';
 		if (action=='REGISTER')
 		{
 			
-				createContact(MSSecureContactID,userEmail,emailDomain,domainBody,leadSource);
-				result.success = true;
-				return result;
+			didItWork = createContact(MSSecureContactID,userEmail,emailDomain,domainBody,leadSource);
+			result.success = didItWork;
+			return result;
 		}
 		
 //Check to see if the action is "CREATECONTRACT" and the  contractType is "GROUP" - if so, call associate funciton and exit.
 //Will deprecate this function with Subway - will become action of 'ASSOCIATE' and contractType = GROUP
 		if (action=='CREATECONTRACT' && contractType == 'GROUP')
 		{
-			connectUserToFirmContract(MSSubscriptionID,MSSecureContactID);
-			result.success = true;
+			didItWork = connectUserToFirmContract(MSSubscriptionID,MSSecureContactID);
+			result.success = didItWork;
 			return result;
 		}
 		
@@ -339,8 +329,8 @@ String transactionID = '';
 		//Check to see if the action is "Associate" and the  contractType is "GROUP" - if so, call associate funciton and exit.
 		if (action=='ASSOCIATE' && contractType == 'GROUP')
 		{
-			connectUserToFirmContract(MSSubscriptionID,MSSecureContactID);
-			result.success = true;
+			didItWork = connectUserToFirmContract(MSSubscriptionID,MSSecureContactID);
+			result.success = didItWork;
 			return result;
 		}
 		
@@ -350,8 +340,11 @@ String transactionID = '';
  system.debug('checking to see if we should create a contract - type=' + contractType);
  		if (action == 'CREATECONTRACT' && (contractType == 'EVAL' || contractType =='INDIVIDUAL' || contractType =='RENEW'))
  		{
-			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount,referralCode,packageName,transactionID);
-			result.success = true;
+			didItWork = createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount,referralCode,packageName,transactionID);
+			result.success = didItWork;
+			system.debug('didItWork=');
+			
+			system.debug(result.success);
 			return result;
  		}
  		
@@ -359,13 +352,13 @@ String transactionID = '';
  //Check to see if the action is "CREATEGROUPCONTRACT" - if so, create firm contract
  			if (action == 'CREATEGROUPCONTRACT')
  			{
- 			createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount,referralCode,packageName,transactionID);
- 			result.success = true;
+ 			didItWork = createContract(ContractType,MSSecureContactID, SFAccountID, MSSubscriptionID, product, billingAmount,subscriptionExpirationDate,userCount,promoCode,year1Billing,year2Billing,year3Billing,year4Billing,productFeatures,promoDiscount,referralCode,packageName,transactionID);
+ 			result.success = didItWork;
 			return result;
  			}
  
  	//Generic return
-  	result.success = true;
+//  	result.success = true;
 	return result;
     }
     
@@ -380,6 +373,7 @@ String transactionID = '';
 						mail.setPlainTextBody('Check to see if this object was created successfully. Submitted data:     ' + emailBody);
 						mail.setHtmlBody('Check to see if this object was created successfully. <br> <br>  Submitted data:   <br><br>' + emailBody);
 						Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
+						return;
 				}    
 				
 	public static void sendNotificationEmail (String message, String [] TOrecipients, String [] CCrecipients)
@@ -396,7 +390,7 @@ String transactionID = '';
 						Messaging.sendEmail(new Messaging.SingleEmailMessage[] { mail });
 				}
     
-    public static void changeContactDetails(String MSSecureContactID, String firstName, String lastName, String emailAddress, String accountName, string emailOptOut, string userPhone)
+    public static boolean changeContactDetails(String MSSecureContactID, String firstName, String lastName, String emailAddress, String accountName, string emailOptOut, string userPhone)
 				{
 				String accountId ='';
 				String origAccountName = '';
@@ -447,9 +441,9 @@ String transactionID = '';
 						system.debug('userPhone is not null');
 						updatecontact[0].Phone = userPhone;
 						}
-					system.debug('getting ready to call the update on the updateContact object');
+					
 					update updateContact;
-					system.debug('just called update on updatecontactonject');
+					
 					if (accountName != '')
 					{
 					system.debug('accountName variable was null');	
@@ -480,15 +474,16 @@ String transactionID = '';
 					
 								
 					}
+					return true;
 				}
 				catch (exception e)
 				{
 						handleErrorAndSendEmail('Error changing contact details for GUID ' + MSSecureContactID,e.getmessage());	
-				
+					return false;
 				}
 			}
     
-    public static void createContact(String MSSecureContactID, String emailAddress, String emailDomain, String domainBody, String leadSource)
+    public static boolean createContact(String MSSecureContactID, String emailAddress, String emailDomain, String domainBody, String leadSource)
     		{
     			String emailDomainBlackList = 'mailinator.com,trashmail.net,trbvm.com,gmail.com,yahoo.com,msn.com,outlook.com,me.com,icloud.com,hotmail.com,aol.com,hushmail.com,lycos.com,mail.com,rackspace.net,live.com,earthlink.net';
     			system.debug('MSSecureContactID for create contact =' + MSSecureContactID);
@@ -509,8 +504,8 @@ String transactionID = '';
     			
     			try 
     			{
-    				Lead [] leadArray = [Select id, name, company, email, ownerID From Lead Where Email = :emailAddress Limit 1];
-    				if (leadArray.size() > 0) 
+    				Lead [] leadArray = [Select id, name, company, email, ownerID From Lead Where Email = :emailAddress ];
+    				if (leadArray.size()> 0 )
 									{
 										system.debug('got existing lead.  Will also ensure there is not an existing contact with matching email address.');
 										
@@ -521,25 +516,7 @@ String transactionID = '';
 										leadId = leadArray[0].Id;
 										contactAndLeadBothExistMessage = contactAndLeadBothExistMessage + leadId;
 										
-										
-										//Get user details, so we can email the lead owner and their manager
-										
-												//user [] leadOwnerUser = [select name, email from user where id = :leadOwner];
-												//	if (leadOwnerUser.size() > 0)
-												//		{
-												//			leadOwner = leadOwnerUser[0].name;
-												//			leadOwnerEmail = leadOwnerUser[0].email;
-												//			contactAndLeadBothExistTORecipients.add(leadOwnerEmail);
-												//			contactAndLeadBothExistCCRecipients.add(leadOwnerUser[0].manager.email);
-												//			
-												//		}
-											
-										//Check to see if there is an existing contact with this email address.
-										//If there is the lead can't convert, because it will fail a duplicate constraint
-										//The sales rep will need to convert the lead manually.
-										//Send an email to the rep and their manager, and skip converting the lead.
-										
-												contact [] leadContactCheck = [select id from contact where email = :emailAddress limit 1];
+												contact [] leadContactCheck = [select id from contact where email = :emailAddress ];
 													
 													if (leadContactCheck.size() > 0)
 													{
@@ -574,6 +551,7 @@ String transactionID = '';
     			catch (exception e)
     			{
     				handleErrorAndSendEmail('Unable to query for or create Lead for contact ',emailAddress);
+    				
     			}
     			
     			
@@ -615,6 +593,7 @@ String transactionID = '';
 										catch (exception e)
 										{
 											handleErrorAndSendEmail('Unable to find / query for employment unknown  Account.',emailDomain);
+											return false;
 										}
 										
 																			
@@ -625,25 +604,24 @@ String transactionID = '';
 				catch (exception e)
 				{
 						handleErrorAndSendEmail('Unable to query for or create Account.',emailDomain);
+						return false;
 
 				}
     	
     		
-			// Look up the contact by email address.  If it does not exist, create a new contact.	
+			// Look up the contact by email address or secure contacat ID.  If it does not exist, create a new contact.	
 			
 			try 
 				{
 				
-							
 				
-					
 					system.debug('looking for contacts');
-	       			Contact [] contactArray = [Select Id, Name, Email From Contact Where email = :emailAddress Limit 1];
+	       			Contact [] contactArray = [Select Id, Name, Email From Contact Where (email = :emailAddress) or (mssecurecontactid__c = :MSSecureContactID) ];
 
 						//If we got a contact from the above query by email, use it.
-		  				if (contactArray.size() > 0) 
+		  				if (contactArray.size() == 1) 
   						{		
-  							system.debug('Found a contact by the passed in email address');
+  							system.debug('Found a contact by the passed in email address or secure contact id');
 			             	//Update contact with the MSSecureContactID
 			             	contactArray[0].MSSecureContactID__c = MSSecureContactID;
 			             	contactArray[0].SecureRegistrationDate__c = date.today();
@@ -667,6 +645,10 @@ String transactionID = '';
 			             	
 			             	update contactArray[0];
 			               	
+               			} else if (contactArray.size() > 1)
+               			{
+               				handleErrorAndSendEmail('Multiple contacts found with this email address or secure contact ID.',emailAddress);
+               				return false;
                			}	 
 		         
 		         //There's no existing contact, so create one.
@@ -699,17 +681,19 @@ String transactionID = '';
 			             				             	
 			               	insert cnt;
 		              	}
+				return true;
 				}
 			//Throw error if the query for contact fails
 			catch (System.Queryexception e)
 				{
 		    		handleErrorAndSendEmail('Error querying for / creating contact for GUID ' + MSSecureContactID,e.getmessage());
+		    		return false;
 
     			}
     			
 		    }
 		    
-	public static void createContract(String ContractType,String MSSecureContactID, String SFAccountID, String MSSubscriptionID, String product,  String billingAmount, String subscriptionExpirationDate, String userCount,String promoCode,String year1billing,String year2billing,String year3billing,String year4billing, String productFeatures, String promoDiscount, String referralCode, String packageName, String transactionId)
+	public static boolean createContract(String ContractType,String MSSecureContactID, String SFAccountID, String MSSubscriptionID, String product,  String billingAmount, String subscriptionExpirationDate, String userCount,String promoCode,String year1billing,String year2billing,String year3billing,String year4billing, String productFeatures, String promoDiscount, String referralCode, String packageName, String transactionId)
 		    {
 		    	String accountId = '';
 		    	String contactId = '';
@@ -802,7 +786,7 @@ String transactionID = '';
 				    	catch (exception e)
 				    	{
 				    		handleErrorAndSendEmail('Unable to query for Contact.',MSSecureContactID);
-									return;
+							return false;
 				    	}
 		    }	    	
 	//Try to get the SF Account from the passed in SFAccountID 
@@ -845,7 +829,7 @@ String transactionID = '';
 					catch (exception e)
 						{
 							handleErrorAndSendEmail('Unable to query for / create Account.',SFAccountID);
-							return;
+							return false;
 						}
 		    	
 		    	}
@@ -853,7 +837,8 @@ String transactionID = '';
 		    		{
 		    			
 		    			handleErrorAndSendEmail('Contact and SFAccountID both NULL. Invalid CreateContract call.',MSSecureContactID + ' / ' + SFAccountID);
-		    			return;
+		    			system.debug('going to return false');
+		    			return false;
 		    		}
 		    	
 		    	try
@@ -863,13 +848,6 @@ String transactionID = '';
 					//First, try to look up an existing contract by subscription ID.  If we find it, we're just updating things.  If not, create new one.
 					String updateContractId = '';
 					String checkContractID = '';
-					
-					system.debug('getting the billingamountint');
-					
-					if (billingAmount == ''){
-						billingAmount = '0';
-					}
-					
 					
 					decimal billingAmountInt = decimal.valueof(billingAmount);
 					Contract [] checkContract = [Select ID, MSSubscriptionID__c, online_subscription_revenue_to_date__c from Contract where MSSubscriptionID__c = :MSSubscriptionID];
@@ -1112,12 +1090,12 @@ String transactionID = '';
 							
 							
 							
-							
+							return true;
 							}	
 						catch (exception e)	
 						{
 						handleErrorAndSendEmail('Error creating contract', e.getmessage());
-						
+						return false;
 						}
 						
 		    	
@@ -1126,14 +1104,24 @@ String transactionID = '';
 		   
 		    }
 		    
-		    public static void deleteContractProducts (String contractID)
+		    public static boolean deleteContractProducts (String contractID)
 		    		{
+		    		try{
+		    			
+		    		
 		    		contract_product__c [] CPs = [select Product__c from contract_product__c where contract__c = :contractID ];
 		    		delete CPs;
+		    		return true;
+		    		}
+		    		catch (exception e){
+		    			return false;
+		    		}
 		    		}
 		    
-		    public static void createContractProduct (String contractId, String Product, String recordTypeId)
+		    public static boolean createContractProduct (String contractId, String Product, String recordTypeId)
 		    		{
+		    			try{
+		    				
 		    			
 		    			 if (product != ''){
 		    					contract_product__c newCP = new contract_product__c();
@@ -1142,10 +1130,16 @@ String transactionID = '';
     							newCP.RecordTypeID = recordTypeId;
     							insert newCP;
 		    			 }
+		    			 return true;
+		    			}
+		    			catch (exception e)
+		    			{
+		    				return false;
+		    			}
 				    } 
 		    
 		    
-	public static void connectUserToFirmContract(String MSSubscriptionID, String MSSecureContactID)
+	public static boolean connectUserToFirmContract(String MSSubscriptionID, String MSSecureContactID)
 			{
 			String contractId = '';
 			String accountId = '';
@@ -1166,7 +1160,7 @@ String transactionID = '';
 						if (contractArray.size() == 0 || contractArray.size() == null)
 	  						{
 	  							handleErrorAndSendEmail('No Contracts found for subscriptionID ' + MSSubscriptionID,MSSubscriptionID);
-	  							return;
+	  							return false;
 	  						}
 	  						else 
 	  						{
@@ -1179,23 +1173,25 @@ String transactionID = '';
 	  						contactArray[0].patent_contract__c = contractId;
 	  						//update userContact;
 	  						update contactArray[0];	
-				
+				return true;
 				
 					}
 				catch (QueryException e)
 					{
-						handleErrorAndSendEmail('Error connecting contract for user ' + contact.id,e.getmessage());	
+						handleErrorAndSendEmail('Error connecting contract for user ' + contact.id,e.getmessage());
+						return false;	
 					}
 			
 			}
 			
 		
-			public static void updateContractStartEndDates(String contractId, Date startDate)
+			public static boolean updateContractStartEndDates(String contractId, Date startDate)
 			{
 				
 				contract newContract = [select ID, Contract_Term_Length_Yrs__c, product__c, MSSubscriptionID__c,  year_1_start_date__c, year_1_end_date__c,year_2_start_date__c, year_2_end_date__c, year_3_start_date__c, year_3_end_date__c, year_4_start_date__c ,year_4_end_date__c from Contract where id = :contractId];
 				
-			
+			try{
+				
 					Date startDateForCalculations = startDate ;
             		integer term = newContract.Contract_Term_Length_Yrs__c.intValue();
             		newContract.year_1_start_date__c = startDateForCalculations;
@@ -1217,19 +1213,25 @@ String transactionID = '';
 			
 				    		
 		    		update newContract;
-		    		
-		    				
+		    	return true;
+			}	
+		    catch (exception e)
+		    {
+		    	return false;
+		    }				
 		    				
 			}		   
 		
 		
 		
 			
-			public static void updateContractRevenueAmounts(String contractId, Decimal billingAmountInt)
+			public static boolean updateContractRevenueAmounts(String contractId, Decimal billingAmountInt)
 			{
 				
 				contract updateContract = [select ID, product__c, MSSubscriptionID__c, online_subscription_revenue_to_date__c,year_1_billing_amount_patent_Companion__c, year_2_billing_amount_patent_Companion__c,year_3_billing_amount_patent_Companion__c,year_4_billing_amount_patent_Companion__c ,Year_1_Billing_Amount_EagleEye__c,Year_2_Billing_Amount_EagleEye__c,Year_3_Billing_Amount_EagleEye__c,Year_4_Billing_Amount_EagleEye__c,startdate from Contract where id = :contractId];
 				
+				try{
+					
 				
 				
 				string howFarIntoContract = String.valueof((updateContract.startdate.monthsBetween(date.today())));
@@ -1294,13 +1296,17 @@ String transactionID = '';
 				    				}
 		    		
 		    		update updateContract;
-		    		
-		    				
+			return true;
+				}	
+		    	catch (exception e)
+		    	{
+		    		return false;
+		    	}			
 		    				
 			}		   
 			
 			
-		public static void createOpportunityForContract(String MSSubscriptionID, String Product) 
+		public static boolean createOpportunityForContract(String MSSubscriptionID, String Product) 
 			{
 			
 			try
@@ -1398,18 +1404,19 @@ String transactionID = '';
 			  					}
   						}	
   				
-  						
+  				return true;		
 			}
 			catch (exception e)
 					{
-						handleErrorAndSendEmail('Error changing user count contract  ' + MSSubscriptionID,e.getmessage());	
+						handleErrorAndSendEmail('Error creating opportunity  ' + MSSubscriptionID,e.getmessage());
+						return false;	
 					}
 			}
 			
 			
 			
 			
-			public static void changeContractUserCount(String MSSubscriptionID, String userCount) 
+			public static boolean changeContractUserCount(String MSSubscriptionID, String userCount) 
 			{
 			
 			try
@@ -1434,17 +1441,23 @@ String transactionID = '';
 			  						contractArray[a].Description = String.valueof(date.today()) + 'User count updated via secure portal' + '\r\n' + contractArray[a].Description;
 			  						update contractArray[a];
 									}
+						return true;			
   						}	
-  				
+  						else
+  						{
+  						handleErrorAndSendEmail('Error changing user count for contract ' + MSSubscriptionID ,'No contract found for passed in ID.');
+  						return false;
+  						}
   						
 			}
 			catch (exception e)
 					{
-						handleErrorAndSendEmail('Error changing user count contract  ' + MSSubscriptionID,e.getmessage());	
+						handleErrorAndSendEmail('Error changing user count contract  ' + MSSubscriptionID,e.getmessage());
+						return false;	
 					}
 			}
 			
-			public static void changeContractEndDate(String MSSubscriptionID, String subscriptionExpirationDate) 
+			public static boolean changeContractEndDate(String MSSubscriptionID, String subscriptionExpirationDate) 
 			{
 			
 			try
@@ -1468,18 +1481,23 @@ String transactionID = '';
 			  						contractArray[a].Description = String.valueof(date.today()) + 'Contract End Date changed by Secure Portal user' + '\r\n' + contractArray[a].Description;
 			  						update contractArray[a];
 									}
+  						return true;
   						}	
-  				
+  				else {
+  						handleErrorAndSendEmail('Error changing end date for ' + MSSubscriptionID,'No Contract found for passed in ID');
+  				return false;	
+  				}
   						
 			}
 			catch (exception e)
 					{
-						handleErrorAndSendEmail('Error changing end date' + MSSubscriptionID,e.getmessage());	
+						handleErrorAndSendEmail('Error changing end date' + MSSubscriptionID,e.getmessage());
+						return false;	
 					}
 			}
 			
 			
-			public static void cancelContracts(String MSSubscriptionID) 
+			public static boolean cancelContracts(String MSSubscriptionID) 
 			{
 			
 			try
@@ -1503,35 +1521,53 @@ String transactionID = '';
 			  						update contractArray[a];
 									}
   						}	
-  				
+  				return true;
   						
 			}
 			catch (exception e)
 					{
-						handleErrorAndSendEmail('Error cancelling contract  ' + MSSubscriptionID,e.getmessage());	
+						handleErrorAndSendEmail('Error cancelling contract  ' + MSSubscriptionID,e.getmessage());
+						return false;	
 					}
 			}
 				
-			public Decimal decimalZeroIfNull(Decimal num )
-				{
-			if (num == null) num = 0;
-			return num;
-				}
+			
+			public static boolean updateContractFeatures(string productFeatures, string MSSubscriptionID, string product)
+			{
+ 			try {
+ 			RecordType rt = [select Id from RecordType where Name = 'User Licenses' and SobjectType = 'Contract_Product__c' limit 1];
+			String[] productFeaturesArray = productFeatures.split('--',0); 			
+ 			Contract checkContract = [Select ID from Contract where MSSubscriptionID__c = :MSSubscriptionID];
+ 			deleteContractProducts(checkContract.id);
+			createContractProduct(checkContract.id, product, rt.id);	
+				for (Integer i = 0; i < productFeaturesArray.size(); i++)
+					 {  
+								
+    				createContractProduct (checkContract.id, productFeaturesArray[i], rt.id);	
+    												
+					 }
+				return true;
+			}
+			catch (exception e)
+			{
+						handleErrorAndSendEmail('Error udpating contract features for  contract  ' + MSSubscriptionID,e.getmessage());
+						return false;	
+			
 				
-			public Integer integerZeroIfNull(Integer num )
-				{
-			if (num == null) num = 0;
-			return num;
-				}
+			}
+			
+			}
+			
+			
 						    
-		    public static void addDownloadRecord(String downloadFileName, String downloadDateTime, String userEmail, String MSSecureContactID,String emailDomain, String domainBody, String leadSource)
+		    public static boolean addDownloadRecord(String downloadFileName, String downloadDateTime, String userEmail, String MSSecureContactID,String emailDomain, String domainBody, String leadSource)
 		    {
 		    String DLContactID = '';
 		    String DLAccountID = '';
 		     system.debug(downloadDateTime);
-		    Date downloadDateTimeAsDate = Date.parse(downloadDateTime);	
+		    Datetime downloadDateTimeAsDatetime = Datetime.parse(downloadDateTime);	
 		   
-		    system.debug(downloadDateTimeAsDate);
+		    system.debug(downloadDateTimeAsDatetime);
 		    
 		    try
 		    {
@@ -1540,9 +1576,11 @@ String transactionID = '';
 							
 							if (DLContact.size() == 0 | DLContact.size() == null)
 							{
-							
-							createContact(MSSecureContactID,userEmail,emailDomain,domainBody,leadSource);
-							DLContact = [Select AccountId, Id, account.Name  From Contact Where MSSecureContactID__c = :MSSecureContactID];
+							handleErrorAndSendEmail('Error creating download record-no contact found for specified MSSecureContactID','ERROR!');
+							return false;
+							//createContact(MSSecureContactID,userEmail,emailDomain,domainBody,leadSource);
+							//changeContactDetails(MSSecureContactID, 'testfirst','testlast', userEmail, 'accountname', 'true', '5551212');
+							//DLContact = [Select AccountId, Id, account.Name  From Contact Where MSSecureContactID__c = :MSSecureContactID];
 							
 							} else
 							{
@@ -1555,15 +1593,16 @@ String transactionID = '';
 							newDownload.Contact__c = DLContactId;
 							newDownload.Account__c = DLAccountId;
 							newDownload.fileDownloaded__C = downloadFileName;
-							newDownload.whenDownloaded__c = downloadDateTimeAsDate;
+							newDownload.whenDownloaded__c = downloadDateTimeAsDatetime;
 							insert newDownload;
-							
+							return true;
 		    	
 		    	
 		    }	
 		    	catch (exception e)
 		    	{
 		    		handleErrorAndSendEmail('Error creating download record',e.getmessage());
+		    		return false;
 		    	}
 		    	
 		    }
