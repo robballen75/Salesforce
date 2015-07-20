@@ -68,7 +68,7 @@ global with sharing class Batch_ProjectExceptionCalc implements Database.Batchab
 		return Database.getQueryLocator([SELECT ID, name, project_status__c, project_end_date__c, project_exception_status__c,
 										 project_hours__c, project_hours_logged_f__c, proj_hrs_logged_billable_not_chargeable__c
 		                                 FROM ms_project__c
-		                                 WHERE project_status__c NOT in :setExcludeProjectStatus AND
+		                                 WHERE project_status__c NOT in :setExcludeProjectStatus AND (not name like '%microsystems%') and
 		                                 	   (project_end_date__c < :dateToday OR
 		                                        project_status__c in :setIncludeProjectStatus OR
 		                                        project_hours_logged_f__c > 0 OR

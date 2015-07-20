@@ -89,8 +89,26 @@ system.debug('checking to see if the currency is pounds');
 				
 			system.debug('rate');
 			system.debug(totalNewTermValue);
-						
-			User  u = [select id from user where id = :cont.account.Client_Relations_Account_Owner__c];
+			
+			//Set up variables to use because of LexisDraft differences.
+			string product = '';
+			string leadSource = '';
+			string partner = ''; 
+			String ownerSFId = '';
+			if (products.containsIgnoreCase('Lexis')) {
+			User  u = [select id from user where partner_responsibility__c = 'LexisNexis'];
+			ownerSFId = u.id;	
+			product = 'LexisDraft Renewal';
+			leadSource = 'Partner-LexisNexis';
+			partner = 'LexisNexis';
+			}
+			else {
+				User  u = [select id from user where id = :cont.account.Client_Relations_Account_Owner__c];
+				ownerSFId = u.id;
+				product = 'Renewal';
+			}
+			
+			
 			
 			
 			
@@ -100,11 +118,11 @@ system.debug('checking to see if the currency is pounds');
             AccountID = cont.AccountId
             ,name=cont.account.name + ' - ' + products + ' Renewal'
             ,Opportunity_Start_Date__c = cont.enddate +1
-            ,Product__c = 'Renewal'
+            ,Product__c = product
             ,Related_Renewal_Contract__c = cont.id
             ,CloseDate = cont.enddate + 1
             ,StageName = '7-Negotiation'
-            ,ownerID = u.Id
+            ,ownerID = ownerSFId
             ,amount = totalNewTermValue
             ,Software_Amount__c = totalNewTermValue
             ,Grading_Scale__c = '8-14 (solid opportunity)'
@@ -113,6 +131,8 @@ system.debug('checking to see if the currency is pounds');
             ,RENEWAL_New_Contract_Start_Date__c = cont.enddate +1
             ,RENEWAL_Old_Contract_End_Date__c = cont.enddate
             ,RENEWAL_Prior_Contract_Yr_3_Amount__c = totalNewTermValue
+            ,leadsource = leadSource
+            ,Partner_Reseller__c = partner 
             );
             insert o;
             

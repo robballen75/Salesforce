@@ -802,7 +802,7 @@ String transactionID = '';
 									system.debug('got existing account');
 									system.debug('accountId=' + accountID);
 									
-									if (product == 'EagleEye') {
+									if (product == 'EagleEye' | product == 'Drafting Companion') {
 									accountArray[0].EagleEye__c = True;										
 									} 
 									
@@ -919,7 +919,7 @@ String transactionID = '';
 											updateContact.patent_companion__c = true;
 											updateContract.patent_companion_users__c = userCountInt;
 											}
-											If (product=='EagleEye'){
+											If (product=='EagleEye' | product == 'Drafting Companion'){
 												updateContact.EagleEye__c = true;
 												updateContact.Agreement_Checker_Trial_Start__c = date.today();
 												updateContact.Agreement_Checker_Trial_End__c = subscriptionExpirationDateAsDate;
@@ -943,7 +943,7 @@ String transactionID = '';
 											//if (promocode != '') updateContract.promotion_applied__C = true;
 											//if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
 											
-											If (product=='EagleEye'){
+											If (product=='EagleEye' | product == 'Drafting Companion'){
 												updateContract.EagleEye_users__c = userCountInt;
 												}
 											
@@ -961,7 +961,7 @@ String transactionID = '';
 				    										if (product == 'Patent Companion'){
 				    										updateContact.patent_companion__c = true;
 				    										}
-				    										if (product == 'EagleEye'){
+				    										if (product == 'EagleEye' | product == 'Drafting Companion'){
 				    										updateContact.EagleEye__c = true;
 				    										}
 				    										
@@ -1006,7 +1006,7 @@ String transactionID = '';
 											//if (promocode != '') updateContract.promotion_applied__C = true;
 											//if (promoDiscount != '') updateContract.promotion_amount__c = decimal.valueOf(promoDiscount);
 											
-											If (product=='EagleEye'){
+											If (product=='EagleEye' | product == 'Drafting Companion'){
 												updateContract.EagleEye_users__c = userCountInt;
 												}
 											
@@ -1035,7 +1035,7 @@ String transactionID = '';
 											updatecontract.year_3_billing_amount_patent_companion__c = year3billingInt;
 											updatecontract.year_4_billing_amount_patent_companion__c = year4billingInt;	
 											}
-											if (product == 'EagleEye') {
+											if (product == 'EagleEye' | product == 'Drafting Companion') {
 												system.debug('This is an EE contract');
 											updateContract.EagleEye_users__c = userCountInt;
 											updatecontract.year_1_billing_amount_EagleEye__c = year1billingInt;
@@ -1266,7 +1266,7 @@ String transactionID = '';
 				    				}				 	
 		    		
 		    		
-		    					if (updatecontract.product__c == 'EagleEye'){	
+		    					if (updatecontract.product__c == 'EagleEye' | updatecontract.product__c == 'Drafting Companion'){	
 		    					decimal origYear1Billing = updateContract.year_1_billing_amount_EagleEye__c;
 		    					if (origYear1Billing == null) origYear1Billing = 0;
 		    					
@@ -1437,7 +1437,7 @@ String transactionID = '';
 			  						system.debug('changed user count for ' + contractArray[a].id);
 			  						system.debug(contractArray[a].product__c);
 			  						if (contractArray[a].product__c == 'Patent Companion') contractArray[a].Patent_Companion_Users__c = decimal.valueOf(userCount); 
-			  						if (contractArray[a].product__c == 'EagleEye') contractArray[a].EagleEye_Users__c = decimal.valueOf(userCount); 
+			  						if (contractArray[a].product__c == 'EagleEye' | contractArray[a].product__c == 'Drafting Companion') contractArray[a].EagleEye_Users__c = decimal.valueOf(userCount); 
 			  						contractArray[a].Description = String.valueof(date.today()) + 'User count updated via secure portal' + '\r\n' + contractArray[a].Description;
 			  						update contractArray[a];
 									}

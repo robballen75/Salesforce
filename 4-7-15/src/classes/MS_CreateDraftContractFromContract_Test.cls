@@ -86,41 +86,9 @@ test.starttest();
 		update newCont;
 		controller.create();
 		
-        newCont.Contract_Type__C = 'Agreement (Initial)';
-        newCont.Contract_Sub_Type__c = 'Perpetual';
-        newCont.Contract_Term_Length_Yrs__c = 1;
-        newCont.Year_1_License_Amount_3BClean__c = 100;
-        newcont.Year_1_Maintenance_Amount_3BClean__c = 100;
-        newcont.Year_1_Maintenance_Amount_DocXtools__c = 100;
-        newcont.Year_1_Maintenance_Amount_EagleEye__c = 100;
-	    update newCont;
-	    controller.create();
+       
 	
-		newCont.Contract_Type__C = 'Agreement (Initial)';
-        newCont.Contract_Sub_Type__c = 'Subscription';
-        newCont.Contract_Term_Length_Yrs__c = 4;
-        newCont.Year_1_License_Amount_3BClean__c = 100;
-        newCont.Year_1_Billing_Amount_Software__c = 100;
-        newCont.Year_1_Billing_Amount_EagleEye__c = 100;
-        newCont.Year_1_Billing_Amount_3BClean__c = 100;
-        newCont.Year_2_Billing_Amount_Software__c = 100;
-        newCont.Year_2_Billing_Amount_EagleEye__c = 100;
-        newCont.Year_2_Billing_Amount_3BClean__c = 100;
-        newCont.Year_3_Billing_Amount_Software__c = 100;
-        newCont.Year_3_Billing_Amount_EagleEye__c = 100;
-        newCont.Year_3_Billing_Amount_3BClean__c = 100;
-        newCont.Year_4_Billing_Amount_Software__c = 100;
-        newCont.Year_4_Billing_Amount_EagleEye__c = 100;
-        newCont.Year_4_Billing_Amount_3BClean__c = 100;
-	    update newCont;
-	    controller.create();
-	
-		newcont.Contract_Term_Length_Yrs__c = 1;
-		newCont.Year_1_Billing_Amount_Software__c = 100;
-		newCont.Year_1_Billing_Amount_EagleEye__c = 100;
-		newCont.Year_1_Billing_Amount_3BClean__c = 100;
-		update newCont;
-		controller.create();
+
         test.stoptest();
         
         

@@ -22,13 +22,31 @@ system.debug('body=' + email.plaintextbody);
 
 try
 {
-	  userEmail = email.plainTextBody.substring(email.plainTextBody.indexOf('<userEmail>')+11,email.plainTextBody.indexOf('</userEmail>'));
+	try{
+	  userEmail = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<userEmail>')+11,email.plainTextBody.indexOfIgnoreCase('</userEmail>')).trim();
+	}
+	 catch (exception e)
+	 {system.debug('exception parsing useremail');}
 	  system.debug('userEmail=' + userEmail);
-	  objectType = email.plainTextBody.substring(email.plainTextBody.indexOf('<objectType>')+12,email.plainTextBody.indexOf('</objectType>'));
+	 try{
+	
+	  objectType = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<objectType>')+12,email.plainTextBody.indexOfIgnoreCase('</objectType>')).trim();
+	  }
+	 catch (exception e)
+	 {system.debug('exception parsing objectType');}
 	  system.debug('objectType=' + objectType);
-	  userContent = email.plainTextBody.substring(email.plainTextBody.indexOf('<userContent>')+13,email.plainTextBody.indexOf('</userContent>'));
+	  try{
+	  userContent = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<userContent>')+13,email.plainTextBody.indexOfIgnoreCase('</userContent>')).trim();
+	  }
+	 catch (exception e)
+	 {system.debug('exception parsing userContent');}
 	  system.debug('userContent=' + userContent);
-      product = email.plainTextBody.substring(email.plainTextBody.indexOf('<product>')+9,email.plainTextBody.indexOf('</product>'));
+      
+      try{
+      product = email.plainTextBody.substring(email.plainTextBody.indexOfIgnoreCase('<product>')+9,email.plainTextBody.indexOfIgnoreCase('</product>')).trim();
+      }
+	 catch (exception e)
+	 {system.debug('exception parsing product');}
       system.debug('product=' + product);
       
       if (userEmail == '')
