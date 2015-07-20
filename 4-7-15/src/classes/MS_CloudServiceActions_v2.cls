@@ -1262,7 +1262,7 @@ String transactionID = '';
 		    							updateContract.year_4_billing_amount_patent_Companion__c = billingAmountInt + origYear4Billing;
 		    						}
 		
-									//end PC if
+									//end PC if tt
 				    				}				 	
 		    		
 		    		
